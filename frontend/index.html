@@ -1,1614 +1,621 @@
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="en" class="dark">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SatyaCheck — Real-Time Fact Verifier</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SatyaCheck AI — Fact Verification</title>
 
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
 
-    // ─── FIREBASE CONFIG ─────────────────────────────────────────
-    // Replace these values from console.firebase.google.com
-    // Go to: Project Settings → Your Apps → Firebase SDK snippet → Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCP4PmVHdyQIATbpZIn5Zm0wukfo_-nBhA",
-      authDomain: "satyacheck-3d9fa.firebaseapp.com",
-      projectId: "satyacheck-3d9fa",
-      storageBucket: "satyacheck-3d9fa.firebasestorage.app",
-      messagingSenderId: "123595736703",
-      appId: "1:123595736703:web:c6f08a2986fe1eb486a14a",
-      measurementId: "G-B330BCX890"
-    };
-
-    try {
-      const app = initializeApp(firebaseConfig);
-      const db = getFirestore(app);
-      window._db = db;
-      window._fb = { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, updateDoc };
-      window._fbReady = true;
-    } catch (e) {
-      console.warn('Firebase not configured yet:', e.message);
-      window._fbReady = false;
-    }
-    document.dispatchEvent(new Event('fbReady'));
-  </script>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link
-    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap"
-    rel="stylesheet">
-
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box
-    }
-
-    :root {
-      --bg: #EFF3FF;
-      --card: #FFFFFF;
-      --ink: #151929;
-      --muted: #7B87A6;
-      --border: #E1E8F7;
-      --saffron: #FF6B35;
-      --saffron-l: #FFF0EB;
-      --green: #00C48C;
-      --green-l: #E5FBF4;
-      --red: #FF4757;
-      --red-l: #FFF0F1;
-      --blue: #3B82F6;
-      --blue-l: #EEF4FF;
-      --yellow: #F59E0B;
-      --yellow-l: #FFFBEB;
-      --sh1: 0 2px 10px rgba(21, 25, 41, .06);
-      --sh2: 0 8px 36px rgba(21, 25, 41, .10);
-      --sh3: 0 24px 64px rgba(21, 25, 41, .14);
-    }
-
-    html {
-      scroll-behavior: smooth
-    }
-
-    body {
-      font-family: 'Nunito', sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      min-height: 100vh
-    }
-
-    /* blobs */
-    .blobs {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden
-    }
-
-    .blob {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(90px);
-      opacity: .3
-    }
-
-    .b1 {
-      width: 700px;
-      height: 700px;
-      background: #FFCDB8;
-      top: -200px;
-      right: -150px;
-      animation: dr 16s ease-in-out infinite alternate
-    }
-
-    .b2 {
-      width: 600px;
-      height: 600px;
-      background: #B8CBFF;
-      bottom: -200px;
-      left: -150px;
-      animation: dr 20s ease-in-out infinite alternate-reverse
-    }
-
-    .b3 {
-      width: 400px;
-      height: 400px;
-      background: #B8FFE0;
-      top: 45%;
-      left: 40%;
-      animation: dr 12s ease-in-out infinite alternate
-    }
-
-    @keyframes dr {
-      from {
-        transform: translate(0, 0) scale(1)
-      }
-
-      to {
-        transform: translate(25px, 15px) scale(1.06)
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: { sans: ['Inter', 'sans-serif'] },
+        colors: {
+          bgBase: '#0b1120',
+          cardBg: 'rgba(255, 255, 255, 0.04)',
+          cardBorder: 'rgba(255, 255, 255, 0.08)',
+          primary: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' }
+        },
+        animation: {
+          'gradient-x': 'gradient-x 15s ease infinite',
+          'blob': 'blob 7s infinite',
+          'spin-slow': 'spin 3s linear infinite',
+          'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        },
+        keyframes: {
+          'gradient-x': {
+            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
+          },
+          'blob': {
+            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+          },
+          'pulse-glow': {
+            '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(99, 102, 241, 0.5)' },
+            '50%': { opacity: '.7', boxShadow: '0 0 5px rgba(99, 102, 241, 0.2)' },
+          }
+        }
       }
     }
-
-    .wrap {
-      max-width: 760px;
-      margin: 0 auto;
-      padding: 0 20px;
-      position: relative;
-      z-index: 1
-    }
-
-    /* ── header ── */
-    header {
-      padding: 28px 0 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 10px
-    }
-
-    .logo-ico {
-      width: 46px;
-      height: 46px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--saffron), #FF9F6A);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      box-shadow: 0 4px 18px rgba(255, 107, 53, .35)
-    }
-
-    .logo-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--ink)
-    }
-
-    .logo-name span {
-      color: var(--saffron)
-    }
-
-    .live-chip {
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 999px;
-      padding: 8px 16px;
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--muted);
-      box-shadow: var(--sh1)
-    }
-
-    .pulse {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--green);
-      animation: p 2s ease-in-out infinite
-    }
-
-    @keyframes p {
-
-      0%,
-      100% {
-        box-shadow: 0 0 0 0 rgba(0, 196, 140, .45)
-      }
-
-      50% {
-        box-shadow: 0 0 0 7px rgba(0, 196, 140, 0)
-      }
-    }
-
-    /* ── hero ── */
-    .hero {
-      text-align: center;
-      padding: 52px 0 36px
-    }
-
-    .hero-tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: var(--saffron-l);
-      color: var(--saffron);
-      border-radius: 999px;
-      padding: 7px 18px;
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: .04em;
-      margin-bottom: 20px
-    }
-
-    .hero h1 {
-      font-family: 'Syne', sans-serif;
-      font-size: clamp(30px, 6vw, 52px);
-      font-weight: 800;
-      line-height: 1.1;
-      margin-bottom: 14px
-    }
-
-    .hero h1 em {
-      font-style: normal;
-      color: var(--saffron)
-    }
-
-    .hero p {
-      font-size: 16px;
-      color: var(--muted);
-      font-weight: 600;
-      max-width: 480px;
-      margin: 0 auto
-    }
-
-    /* source chips */
-    .src-strip {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 7px;
-      flex-wrap: wrap;
-      margin-top: 26px
-    }
-
-    .src {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      background: var(--card);
-      border: 1.5px solid var(--border);
-      border-radius: 999px;
-      padding: 6px 14px;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--muted);
-      box-shadow: var(--sh1);
-      transition: all .25s ease
-    }
-
-    .src .d {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: #CBD5E1;
-      transition: background .3s
-    }
-
-    .src.on {
-      border-color: var(--green);
-      color: var(--green);
-      background: var(--green-l)
-    }
-
-    .src.on .d {
-      background: var(--green);
-      animation: p .9s infinite
-    }
-
-    .src.chk {
-      border-color: var(--yellow);
-      color: #92400E;
-      background: var(--yellow-l)
-    }
-
-    .src.chk .d {
-      background: var(--yellow);
-      animation: p .6s infinite
-    }
-
-    /* ── input card ── */
-    .icard {
-      background: var(--card);
-      border-radius: 32px;
-      padding: 28px;
-      margin-top: 32px;
-      box-shadow: var(--sh2);
-      border: 1.5px solid var(--border)
-    }
-
-    .ilabel {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px
-    }
-
-    .ilabel-t {
-      font-size: 13px;
-      font-weight: 800;
-      color: var(--muted);
-      letter-spacing: .06em;
-      text-transform: uppercase
-    }
-
-    .lang-pill {
-      background: var(--blue-l);
-      color: var(--blue);
-      border-radius: 999px;
-      padding: 4px 12px;
-      font-size: 12px;
-      font-weight: 800;
-      display: none
-    }
-
-    textarea {
-      width: 100%;
-      min-height: 136px;
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 20px;
-      padding: 18px 20px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--ink);
-      resize: none;
-      transition: border-color .2s, box-shadow .2s;
-      line-height: 1.7
-    }
-
-    textarea:focus {
-      outline: none;
-      border-color: var(--saffron);
-      box-shadow: 0 0 0 4px rgba(255, 107, 53, .1)
-    }
-
-    textarea::placeholder {
-      color: #BFC8DC
-    }
-
-    .imeta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 9px
-    }
-
-    .cc {
-      font-size: 12px;
-      font-weight: 700;
-      color: #BFC8DC
-    }
-
-    .samples {
-      display: flex;
-      gap: 7px;
-      flex-wrap: wrap;
-      margin-top: 16px
-    }
-
-    .sbtn {
-      background: var(--bg);
-      border: 1.5px solid var(--border);
-      border-radius: 999px;
-      padding: 7px 15px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all .2s ease
-    }
-
-    .sbtn:hover {
-      background: var(--saffron-l);
-      border-color: var(--saffron);
-      color: var(--saffron);
-      transform: translateY(-1px)
-    }
-
-    .brow {
-      display: flex;
-      gap: 11px;
-      margin-top: 20px
-    }
-
-    .btn-go {
-      flex: 1;
-      background: linear-gradient(135deg, var(--saffron), #FF9B6A);
-      color: #fff;
-      border: none;
-      border-radius: 999px;
-      padding: 18px 32px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 15px;
-      font-weight: 900;
-      cursor: pointer;
-      box-shadow: 0 8px 24px rgba(255, 107, 53, .35);
-      transition: all .2s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 9px;
-      letter-spacing: .02em
-    }
-
-    .btn-go:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 14px 34px rgba(255, 107, 53, .45)
-    }
-
-    .btn-go:active {
-      transform: translateY(0)
-    }
-
-    .btn-go:disabled {
-      opacity: .6;
-      cursor: not-allowed;
-      transform: none
-    }
-
-    .btn-x {
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 999px;
-      padding: 18px 22px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 14px;
-      font-weight: 800;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all .2s ease
-    }
-
-    .btn-x:hover {
-      background: var(--red-l);
-      border-color: var(--red);
-      color: var(--red)
-    }
-
-    /* ── scan progress ── */
-    .scanbox {
-      display: none;
-      background: var(--card);
-      border-radius: 28px;
-      padding: 26px;
-      margin-top: 18px;
-      box-shadow: var(--sh2);
-      border: 1.5px solid var(--border)
-    }
-
-    .scanbox.on {
-      display: block;
-      animation: su .4s ease
-    }
-
-    .scan-hd {
-      font-family: 'Syne', sans-serif;
-      font-size: 17px;
-      font-weight: 800;
-      margin-bottom: 18px;
-      display: flex;
-      align-items: center;
-      gap: 10px
-    }
-
-    .sp {
-      width: 13px;
-      height: 13px;
-      border-radius: 50%;
-      background: var(--saffron);
-      animation: p 1s infinite
-    }
-
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 10px
-    }
-
-    .step {
-      display: flex;
-      align-items: center;
-      gap: 13px;
-      padding: 13px 16px;
-      border-radius: 18px;
-      background: var(--bg);
-      border: 1.5px solid transparent;
-      transition: all .3s ease;
-      font-size: 14px;
-      font-weight: 700
-    }
-
-    .step.pend {
-      color: var(--muted)
-    }
-
-    .step.run {
-      background: var(--yellow-l);
-      border-color: var(--yellow);
-      color: #92400E
-    }
-
-    .step.ok {
-      background: var(--green-l);
-      border-color: var(--green);
-      color: #065F46
-    }
-
-    .step.bad {
-      background: var(--red-l);
-      border-color: var(--red);
-      color: #991B1B
-    }
-
-    .step.sim {
-      background: var(--blue-l);
-      border-color: var(--blue);
-      color: #1E40AF
-    }
-
-    .s-ico {
-      font-size: 19px;
-      flex-shrink: 0
-    }
-
-    .s-inf {
-      flex: 1
-    }
-
-    .s-lbl {
-      font-weight: 800;
-      font-size: 13px
-    }
-
-    .s-dtl {
-      font-size: 12px;
-      font-weight: 600;
-      margin-top: 2px;
-      opacity: .75
-    }
-
-    .s-st {
-      font-size: 17px;
-      flex-shrink: 0
-    }
-
-    /* spin */
-    .spin {
-      display: inline-block;
-      animation: sp .7s linear infinite
-    }
-
-    @keyframes sp {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    @keyframes su {
-      from {
-        opacity: 0;
-        transform: translateY(18px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
-    }
-
-    /* ── result ── */
-    .rbox {
-      display: none;
-      margin-top: 18px;
-      animation: su .5s ease
-    }
-
-    .rbox.on {
-      display: block
-    }
-
-    .rcard {
-      border-radius: 32px;
-      padding: 30px;
-      box-shadow: var(--sh3);
-      border: 2.5px solid transparent
-    }
-
-    .rcard.fake {
-      background: linear-gradient(135deg, #FFF5F5, #FFF0F0);
-      border-color: rgba(255, 71, 87, .25)
-    }
-
-    .rcard.real {
-      background: linear-gradient(135deg, #F0FFF8, #ECFDF5);
-      border-color: rgba(0, 196, 140, .25)
-    }
-
-    .rcard.unv {
-      background: linear-gradient(135deg, #FFFBEB, #FFF9E5);
-      border-color: rgba(245, 158, 11, .25)
-    }
-
-    .rhd {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 14px;
-      margin-bottom: 22px
-    }
-
-    .rverdict {
-      display: flex;
-      align-items: center;
-      gap: 14px
-    }
-
-    .v-ico {
-      font-size: 46px;
-      line-height: 1
-    }
-
-    .v-lbl {
-      font-family: 'Syne', sans-serif;
-      font-size: 26px;
-      font-weight: 800;
-      line-height: 1
-    }
-
-    .v-lbl.fake {
-      color: var(--red)
-    }
-
-    .v-lbl.real {
-      color: var(--green)
-    }
-
-    .v-lbl.unv {
-      color: var(--yellow)
-    }
-
-    .v-sub {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-      margin-top: 4px
-    }
-
-    .v-meta {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 8px
-    }
-
-    .v-tag {
-      font-size: 11px;
-      font-weight: 800;
-      color: var(--muted)
-    }
-
-    .ccirc {
-      flex-shrink: 0;
-      width: 76px;
-      height: 76px;
-      border-radius: 50%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 4px solid;
-      font-family: 'Syne', sans-serif
-    }
-
-    .ccirc.fake {
-      border-color: var(--red);
-      background: var(--red-l);
-      color: var(--red)
-    }
-
-    .ccirc.real {
-      border-color: var(--green);
-      background: var(--green-l);
-      color: var(--green)
-    }
-
-    .ccirc.unv {
-      border-color: var(--yellow);
-      background: var(--yellow-l);
-      color: #92400E
-    }
-
-    .cpct {
-      font-size: 21px;
-      font-weight: 800;
-      line-height: 1
-    }
-
-    .clbl {
-      font-size: 9px;
-      font-weight: 700;
-      letter-spacing: .1em;
-      opacity: .7
-    }
-
-    /* matches */
-    .sec-ttl {
-      font-size: 11px;
-      font-weight: 900;
-      text-transform: uppercase;
-      letter-spacing: .08em;
-      color: var(--muted);
-      margin-bottom: 11px
-    }
-
-    .mlist {
-      display: flex;
-      flex-direction: column;
-      gap: 9px
-    }
-
-    .mrow {
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      background: white;
-      border-radius: 18px;
-      padding: 13px 17px;
-      border: 1.5px solid var(--border);
-      box-shadow: var(--sh1)
-    }
-
-    .mlogo {
-      width: 34px;
-      height: 34px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      font-weight: 900;
-      flex-shrink: 0
-    }
-
-    .minfo {
-      flex: 1;
-      min-width: 0
-    }
-
-    .msrc {
-      font-size: 13px;
-      font-weight: 800
-    }
-
-    .mhl {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted);
-      margin-top: 2px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis
-    }
-
-    .mbadge {
-      border-radius: 999px;
-      padding: 4px 11px;
-      font-size: 11px;
-      font-weight: 900;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      flex-shrink: 0
-    }
-
-    .mbadge.ok {
-      background: var(--green-l);
-      color: var(--green)
-    }
-
-    .mbadge.no {
-      background: var(--red-l);
-      color: var(--red)
-    }
-
-    .mbadge.sim {
-      background: var(--blue-l);
-      color: var(--blue)
-    }
-
-    /* flags */
-    .fgrid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      margin-top: 10px
-    }
-
-    .fchip {
-      background: white;
-      border: 1.5px solid rgba(255, 71, 87, .22);
-      border-radius: 999px;
-      padding: 5px 13px;
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--red)
-    }
-
-    /* safe/unsafe msg */
-    .safemsg {
-      border-radius: 20px;
-      padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      gap: 11px;
-      margin-top: 18px
-    }
-
-    .safemsg.safe {
-      background: var(--green-l);
-      border: 1.5px solid rgba(0, 196, 140, .28)
-    }
-
-    .safemsg.unsafe {
-      background: var(--red-l);
-      border: 1.5px solid rgba(255, 71, 87, .28)
-    }
-
-    .safemsg.warn {
-      background: var(--yellow-l);
-      border: 1.5px solid rgba(245, 158, 11, .28)
-    }
-
-    .safemsg-ico {
-      font-size: 22px
-    }
-
-    .safemsg-t {
-      font-size: 13px;
-      font-weight: 700
-    }
-
-    .safemsg.safe .safemsg-t {
-      color: #065F46
-    }
-
-    .safemsg.unsafe .safemsg-t {
-      color: #991B1B
-    }
-
-    .safemsg.warn .safemsg-t {
-      color: #92400E
-    }
-
-    /* feedback */
-    .fbrow {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 18px;
-      padding-top: 16px;
-      border-top: 1.5px solid var(--border)
-    }
-
-    .fb-lbl {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--muted)
-    }
-
-    .fbtns {
-      display: flex;
-      gap: 7px
-    }
-
-    .fbb {
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 999px;
-      padding: 8px 17px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 13px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all .2s ease;
-      color: var(--muted)
-    }
-
-    .fbb:hover.ag {
-      background: var(--green-l);
-      border-color: var(--green);
-      color: var(--green)
-    }
-
-    .fbb:hover.dg {
-      background: var(--red-l);
-      border-color: var(--red);
-      color: var(--red)
-    }
-
-    /* stats */
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 11px;
-      margin-top: 28px
-    }
-
-    .scard {
-      background: var(--card);
-      border-radius: 24px;
-      padding: 20px;
-      border: 1.5px solid var(--border);
-      text-align: center;
-      box-shadow: var(--sh1);
-      transition: transform .2s
-    }
-
-    .scard:hover {
-      transform: translateY(-2px)
-    }
-
-    .sv {
-      font-family: 'Syne', sans-serif;
-      font-size: 28px;
-      font-weight: 800
-    }
-
-    .sl {
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--muted);
-      margin-top: 3px
-    }
-
-    /* recent */
-    .recent-sec {
-      margin: 30px 0 48px
-    }
-
-    .sec-hd {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px
-    }
-
-    .sec-name {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px;
-      font-weight: 800
-    }
-
-    .rbtn {
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 999px;
-      padding: 7px 15px;
-      font-family: 'Nunito', sans-serif;
-      font-size: 12px;
-      font-weight: 800;
-      color: var(--muted);
-      cursor: pointer;
-      transition: all .2s
-    }
-
-    .rbtn:hover {
-      background: var(--blue-l);
-      border-color: var(--blue);
-      color: var(--blue)
-    }
-
-    .flist {
-      display: flex;
-      flex-direction: column;
-      gap: 9px
-    }
-
-    .fitem {
-      background: var(--card);
-      border-radius: 20px;
-      padding: 15px 18px;
-      border: 1.5px solid var(--border);
-      box-shadow: var(--sh1);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: transform .2s, box-shadow .2s
-    }
-
-    .fitem:hover {
-      transform: translateY(-1px);
-      box-shadow: var(--sh2)
-    }
-
-    .fi-ico {
-      font-size: 22px;
-      flex-shrink: 0
-    }
-
-    .fi-c {
-      flex: 1;
-      min-width: 0
-    }
-
-    .fi-t {
-      font-size: 13px;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis
-    }
-
-    .fi-m {
-      display: flex;
-      gap: 7px;
-      margin-top: 4px;
-      align-items: center
-    }
-
-    .fi-b {
-      border-radius: 999px;
-      padding: 2px 9px;
-      font-size: 11px;
-      font-weight: 900
-    }
-
-    .fi-b.fake {
-      background: var(--red-l);
-      color: var(--red)
-    }
-
-    .fi-b.real {
-      background: var(--green-l);
-      color: var(--green)
-    }
-
-    .fi-b.unv {
-      background: var(--yellow-l);
-      color: #92400E
-    }
-
-    .fi-tm {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--muted)
-    }
-
-    footer {
-      background: var(--ink);
-      color: rgba(255, 255, 255, .45);
-      border-radius: 32px 32px 0 0;
-      padding: 30px;
-      text-align: center;
-      font-size: 13px;
-      font-weight: 700;
-      position: relative;
-      z-index: 1
-    }
-
-    .ft-logo {
-      font-family: 'Syne', sans-serif;
-      font-size: 20px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 6px
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 26px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--ink);
-      color: #fff;
-      border-radius: 999px;
-      padding: 12px 24px;
-      font-size: 14px;
-      font-weight: 700;
-      box-shadow: var(--sh3);
-      z-index: 999;
-      animation: su .3s ease;
-      white-space: nowrap
-    }
-
-    @media(max-width:600px) {
-      .stats {
-        gap: 8px
-      }
-
-      .scard {
-        padding: 14px 8px
-      }
-
-      .sv {
-        font-size: 22px
-      }
-
-      .rhd {
-        flex-direction: column
-      }
-
-      .ccirc {
-        align-self: flex-start
-      }
-
-      .hero h1 {
-        font-size: 28px
-      }
-    }
-  </style>
+  }
+</script>
+
+<style>
+  body { background-color: #0F172A; color: #F8FAFC; overflow-x: hidden; }
+  .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
+  .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .text-glow { text-shadow: 0 0 20px rgba(99,102,241,0.5); }
+  
+  /* Circular Progress */
+  .progress-ring__circle {
+    transition: stroke-dashoffset 0.8s ease-in-out;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+  }
+
+  /* Custom Scrollbar */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+  .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .bg-noise {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 50; opacity: 0.03;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  }
+
+  .gradient-text { background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+</style>
+
+<!-- Firebase SDK -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCP4PmVHdyQIATbpZIn5Zm0wukfo_-nBhA",
+    authDomain: "satyacheck-3d9fa.firebaseapp.com",
+    projectId: "satyacheck-3d9fa",
+    storageBucket: "satyacheck-3d9fa.firebasestorage.app",
+    messagingSenderId: "123595736703",
+    appId: "1:123595736703:web:c6f08a2986fe1eb486a14a",
+    measurementId: "G-B330BCX890"
+  };
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    window._db = db;
+    window._fb = { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, updateDoc };
+    window._fbReady = true;
+  } catch(e) {
+    console.warn('Firebase init error:', e);
+    window._fbReady = false;
+  }
+  document.dispatchEvent(new Event('fbReady'));
+</script>
 </head>
 
-<body>
+<body class="antialiased selection:bg-indigo-500/30">
+<div class="bg-noise"></div>
 
-  <div class="blobs">
-    <div class="blob b1"></div>
-    <div class="blob b2"></div>
-    <div class="blob b3"></div>
-  </div>
+<!-- Background Elements -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+  <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 mix-blend-screen filter blur-[100px] animate-blob"></div>
+  <div class="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
+  <div class="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] rounded-full bg-blue-600/10 mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
+</div>
 
-  <div class="wrap">
-
-    <!-- Header -->
-    <header>
-      <div class="logo">
-        <div class="logo-ico">🔍</div>
-        <div class="logo-name">Satya<span>Check</span></div>
+<div class="relative z-10 flex flex-col min-h-screen content-wrapper">
+  
+  <!-- Navbar -->
+  <nav class="fixed top-0 w-full glass-panel z-50">
+    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <span class="font-bold text-xl tracking-tight">Satya<span class="text-indigo-400">Check</span></span>
       </div>
-      <div class="live-chip">
-        <div class="pulse"></div>LIVE VERIFY
+      <div class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
+        <a href="#" class="hover:text-white transition-colors">Home</a>
+        <a href="#verify" class="hover:text-white transition-colors">Verify</a>
+        <a href="#feed" class="hover:text-white transition-colors">Live Feed</a>
       </div>
-    </header>
+      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wider">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+        </span>
+        SYSTEM ONLINE
+      </div>
+    </div>
+  </nav>
 
+  <main class="flex-grow pt-32 pb-20 px-4 md:px-8 max-w-5xl mx-auto w-full">
+    
     <!-- Hero -->
-    <div class="hero">
-      <div class="hero-tag">🇮🇳 India's Real-Time Fact Checker</div>
-      <h1>Is this news <em>real?</em><br>We'll find out instantly.</h1>
-      <p>Cross-checked against 8 verified Indian &amp; global news sources in real time.</p>
-      <div class="src-strip">
-        <div class="src" id="c-ndtv">
-          <div class="d"></div>NDTV
-        </div>
-        <div class="src" id="c-hindu">
-          <div class="d"></div>The Hindu
-        </div>
-        <div class="src" id="c-abp">
-          <div class="d"></div>ABP News
-        </div>
-        <div class="src" id="c-tv9">
-          <div class="d"></div>TV9
-        </div>
-        <div class="src" id="c-bbc">
-          <div class="d"></div>BBC India
-        </div>
-        <div class="src" id="c-cnn">
-          <div class="d"></div>CNN
-        </div>
-        <div class="src" id="c-reuters">
-          <div class="d"></div>Reuters
-        </div>
-        <div class="src" id="c-pib">
-          <div class="d"></div>PIB Gov
-        </div>
+    <div class="text-center mb-16 fade-in">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm text-indigo-300 mb-6 border-indigo-500/20">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <span>AI-powered Fake News Detection</span>
       </div>
-    </div>
+      <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
+        Truth verification, <br/><span class="gradient-text">made instantaneous.</span>
+      </h1>
+      <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
+        Cross-check claims against advanced AI linguistics, Google News, and authentic Indian media sources in real-time.
+      </p>
 
-    <!-- Input Card -->
-    <div class="icard">
-      <div class="ilabel">
-        <span class="ilabel-t">📝 Paste News to Verify</span>
-        <span class="lang-pill" id="lang-pill">🗣 Telugu</span>
-      </div>
-      <textarea id="ni" oninput="onIn(this)"
-        placeholder="Paste a news headline, WhatsApp forward, or article snippet here...&#10;&#10;Example: BREAKING!! Free 5G phones for all families. Apply before December 31!!!"></textarea>
-      <div class="imeta">
-        <span class="cc" id="cc">0 / 2000</span>
-        <span style="font-size:11px;font-weight:700;color:#BFC8DC">Ctrl+Enter to verify</span>
-      </div>
-      <div class="samples">
-        <button class="sbtn" onclick="samp('fe')">🔴 Fake (English)</button>
-        <button class="sbtn" onclick="samp('re')">🟢 Real (English)</button>
-        <button class="sbtn" onclick="samp('ft')">🔴 Fake (Telugu)</button>
-        <button class="sbtn" onclick="samp('rt')">🟢 Real (Telugu)</button>
-      </div>
-      <div class="brow">
-        <button class="btn-go" id="gbtn" onclick="go()"><span id="glbl">⚡ Verify Now</span></button>
-        <button class="btn-x" onclick="clr()">✕</button>
-      </div>
-    </div>
-
-    <!-- Scan Progress -->
-    <div class="scanbox" id="sb">
-      <div class="scan-hd">
-        <div class="sp"></div>Scanning verified sources...
-      </div>
-      <div class="steps" id="steps"></div>
-    </div>
-
-    <!-- Result -->
-    <div class="rbox" id="rb">
-      <div class="rcard" id="rc"></div>
-    </div>
-
-    <!-- Stats -->
-    <div class="stats">
-      <div class="scard">
-        <div class="sv" id="st" style="color:var(--saffron)">—</div>
-        <div class="sl">Total Checks</div>
-      </div>
-      <div class="scard">
-        <div class="sv" id="sf" style="color:var(--red)">—</div>
-        <div class="sl">Fake Detected</div>
-      </div>
-      <div class="scard">
-        <div class="sv" id="sr" style="color:var(--green)">—</div>
-        <div class="sl">Verified Real</div>
-      </div>
-    </div>
-
-    <!-- Recent -->
-    <div class="recent-sec">
-      <div class="sec-hd">
-        <div class="sec-name">Recent Checks</div>
-        <button class="rbtn" onclick="loadRecent()">🔄 Refresh</button>
-      </div>
-      <div class="flist" id="fl">
-        <div style="text-align:center;padding:32px;color:var(--muted);font-weight:700">Loading...</div>
-      </div>
-    </div>
-
-  </div><!-- /wrap -->
-
-  <footer>
-    <div class="ft-logo">SatyaCheck 🇮🇳</div>
-    <div>सत्यमेव जयते — Truth Always Prevails</div>
-    <div style="margin-top:6px;font-size:11px">Powered by Firebase · Real-time source verification · No personal data
-      stored</div>
-  </footer>
-
-  <script>
-    // ── SOURCES ──────────────────────────────────────────────────
-    const SRCS = [
-      { id: 'ndtv', name: 'NDTV', emoji: '📺', color: '#C0392B', chip: 'c-ndtv' },
-      { id: 'hindu', name: 'The Hindu', emoji: '📰', color: '#1A5276', chip: 'c-hindu' },
-      { id: 'abp', name: 'ABP News', emoji: '📡', color: '#E74C3C', chip: 'c-abp' },
-      { id: 'tv9', name: 'TV9', emoji: '📻', color: '#8E44AD', chip: 'c-tv9' },
-      { id: 'bbc', name: 'BBC India', emoji: '🌍', color: '#C0392B', chip: 'c-bbc' },
-      { id: 'cnn', name: 'CNN', emoji: '🗞️', color: '#CC0000', chip: 'c-cnn' },
-      { id: 'reuters', name: 'Reuters', emoji: '📌', color: '#F39C12', chip: 'c-reuters' },
-      { id: 'pib', name: 'PIB Gov', emoji: '🏛️', color: '#27AE60', chip: 'c-pib' }
-    ];
-
-    const SAMPLES = {
-      fe: 'BREAKING!! Government is giving FREE 5G smartphones to all BPL families! Apply on PM Jan Dhan Portal before December 31! Share with 20 friends to activate your free phone! HURRY before this is DELETED!!!',
-      re: 'ISRO successfully launched the GSAT-20 communication satellite aboard a SpaceX Falcon 9 rocket from Cape Canaveral. This marks the first commercial collaboration between ISRO and SpaceX, enabling broadband connectivity across India.',
-      ft: 'అత్యవసరం! వాట్సాప్ అకౌంట్లు జనవరి నుండి పెయిడ్ అవుతాయి. ఉచితంగా ఉంచుకోవాలంటే 30 మందికి ఫార్వార్డ్ చేయండి! షేర్ చేయకపోతే అకౌంట్ డిలీట్ అవుతుంది!',
-      rt: 'ఆంధ్రప్రదేశ్ ప్రభుత్వం రైతు భరోసా పథకం కింద రూ.13,500 కోట్లు విడుదల చేసింది. 70 లక్షల రైతు కుటుంబాలకు నేరుగా బ్యాంకు ఖాతాల్లో డబ్బులు జమ అయ్యాయి.'
-    };
-
-    let busy = false, curId = null;
-
-    // ── INPUT ─────────────────────────────────────────────────────
-    function onIn(el) {
-      const t = el.value;
-      document.getElementById('cc').textContent = `${t.length} / 2000`;
-      const p = document.getElementById('lang-pill');
-      const isTe = /[\u0C00-\u0C7F]/.test(t) || /\b(chesaaru|chepparu|undi)\b/i.test(t);
-      p.style.display = t.length > 10 ? 'block' : 'none';
-      p.textContent = isTe ? '🗣 Telugu' : '🗣 English';
-    }
-    function samp(k) { const el = document.getElementById('ni'); el.value = SAMPLES[k]; onIn(el); el.focus() }
-    function clr() {
-      document.getElementById('ni').value = '';
-      document.getElementById('cc').textContent = '0 / 2000';
-      document.getElementById('lang-pill').style.display = 'none';
-      document.getElementById('sb').classList.remove('on');
-      document.getElementById('rb').classList.remove('on');
-      resetChips(); curId = null;
-    }
-    document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') go() });
-
-    // ── CHIP STATES ───────────────────────────────────────────────
-    function chip(id, mode) {
-      const el = document.getElementById(id); if (!el) return;
-      el.className = 'src' + (mode ? ' ' + mode : '');
-      const d = el.querySelector('.d');
-      if (d) d.style.background = mode === 'on' ? 'var(--green)' : mode === 'chk' ? 'var(--yellow)' : '#CBD5E1';
-    }
-    function resetChips() { SRCS.forEach(s => chip(s.chip, '')) }
-
-    // ── STEP MANAGER ──────────────────────────────────────────────
-    const STEPS_DEF = [
-      { ico: '🧠', lbl: 'Running AI detection', id: 'ai' },
-      { ico: '📺', lbl: 'Scanning NDTV', id: 'ndtv' },
-      { ico: '📌', lbl: 'Scanning Reuters', id: 'reuters' },
-      { ico: '📰', lbl: 'Checking Google News', id: 'google' }
-    ];
-    function initSteps() {
-      document.getElementById('steps').innerHTML = STEPS_DEF.map((s, i) => `
-    <div class="step pend" id="step${i}">
-      <div class="s-ico">${s.ico}</div>
-      <div class="s-inf"><div class="s-lbl">${s.lbl}</div><div class="s-dtl" id="sd${i}">Waiting…</div></div>
-      <div class="s-st" id="ss${i}">⏳</div>
-    </div>`).join('');
-      document.getElementById('sb').classList.add('on');
-    }
-    async function setStep(i, state, detail) {
-      const el = document.getElementById(`step${i}`);
-      if (!el) return;
-      const map = { pend: 'pend', run: 'run', ok: 'ok', bad: 'bad', sim: 'sim' };
-      el.className = 'step ' + (map[state] || 'pend');
-      document.getElementById(`sd${i}`).textContent = detail;
-      const ico = { pend: '⏳', run: '<span class="spin">⚙️</span>', ok: '✅', bad: '❌', sim: '〰️' };
-      document.getElementById(`ss${i}`).innerHTML = ico[state] || '⏳';
-    }
-    const dly = ms => new Promise(r => setTimeout(r, ms));
-
-    // ── MAIN CHECK ────────────────────────────────────────────────
-    async function go() {
-      const text = document.getElementById('ni').value.trim();
-      if (text.length < 15) { toast('⚠️ Enter at least 15 characters'); return }
-      if (busy) return;
-      busy = true;
-      const gbtn = document.getElementById('gbtn');
-      document.getElementById('glbl').innerHTML = '<span class="spin">⚙️</span> Verifying…';
-      gbtn.disabled = true;
-      resetChips();
-      initSteps();
-      document.getElementById('rb').classList.remove('on');
-
-      try {
-        await setStep(0, 'run', 'Analyzing patterns…');
-        await dly(300);
-
-        const res = await fetch("http://localhost:8000/api/check", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text })
-        });
-
-        if (!res.ok) throw new Error("API failed");
-        const data = await res.json();
-
-        // AI Step
-        await setStep(0, 'ok', `AI model prediction complete`);
-
-        // NDTV Step
-        await setStep(1, 'run', 'Searching NDTV…');
-        await dly(400);
-        const hasNdtv = data.sources_checked.includes("NDTV");
-        await setStep(1, hasNdtv ? 'ok' : 'sim', hasNdtv ? 'Found in NDTV' : 'Not found');
-        if (hasNdtv) chip('c-ndtv', 'on'); else chip('c-ndtv', 'chk');
-
-        // Reuters Step
-        await setStep(2, 'run', 'Searching Reuters…');
-        await dly(400);
-        const hasReut = data.sources_checked.includes("Reuters");
-        await setStep(2, hasReut ? 'ok' : 'sim', hasReut ? 'Found in Reuters' : 'Not found');
-        if (hasReut) chip('c-reuters', 'on'); else chip('c-reuters', 'chk');
-
-        // Google News Step
-        await setStep(3, 'run', 'Searching Google News…');
-        await dly(400);
-        await setStep(3, data.google_news_verified ? 'ok' : 'sim', data.google_news_verified ? 'Found in Google News' : 'Not found');
-
-        for (let s of SRCS) {
-          if (["NDTV", "Reuters"].includes(s.name)) continue;
-          if (data.sources_checked.includes(s.name)) chip(s.chip, 'on');
-        }
-
-        showResultFromApi(data);
-
-        // Wait briefly for backend to write to Firebase, then refresh lists
-        setTimeout(() => {
-          loadStats();
-          loadRecent();
-        }, 1500);
-
-      } catch (e) {
-        toast("Backend validation failed. Make sure FastAPI server runs.");
-        await setStep(0, 'bad', 'Failed to connect to backend.');
-      }
-
-      document.getElementById('glbl').textContent = '⚡ Verify Now';
-      gbtn.disabled = false;
-      busy = false;
-    }
-
-    function showResultFromApi(data) {
-      const fake = data.verdict === 'Fake', real = data.verdict === 'Real';
-      const cc = fake ? 'fake' : real ? 'real' : 'unv';
-      const pct = Math.round(data.confidence * 100);
-      const ico = fake ? '🚨' : real ? '✅' : '⚠️';
-      const lbl = fake ? 'Likely Fake' : real ? 'Verified Real' : 'Unverified';
-
-      let matches = data.sources_checked.map(srcName => {
-        const srcObj = SRCS.find(s => s.name === srcName);
-        if (!srcObj) return '';
-        return `<div class="mrow">
-        <div class="mlogo" style="background:${srcObj.color}22;color:${srcObj.color}">${srcObj.emoji}</div>
-        <div class="minfo"><div class="msrc">${srcObj.name}</div><div class="mhl">Confirmed via Source</div></div>
-        <div class="mbadge ok">✓ Confirmed</div>
-      </div>`;
-      }).join('');
-
-      if (data.google_news_verified) {
-        matches += `<div class="mrow">
-        <div class="mlogo" style="background:#4285F422;color:#4285F4">📰</div>
-        <div class="minfo"><div class="msrc">Google News</div><div class="mhl">Related content found in top search results</div></div>
-        <div class="mbadge ok">✓ Confirmed</div>
-      </div>`;
-      }
-
-      if (matches === '') {
-        matches = `<div class="mrow" style="color:var(--muted); font-size:13px; font-weight:700;">No sources verified this claim.</div>`;
-      }
-
-      const safeH = real
-        ? `<div class="safemsg safe"><div class="safemsg-ico">🛡️</div><div class="safemsg-t">Safe to share — ${data.explanation}</div></div>`
-        : fake
-          ? `<div class="safemsg unsafe"><div class="safemsg-ico">🚫</div><div class="safemsg-t">Do NOT share — ${data.explanation}</div></div>`
-          : `<div class="safemsg warn"><div class="safemsg-ico">🤔</div><div class="safemsg-t">Verify before sharing — ${data.explanation}</div></div>`;
-
-      document.getElementById('rc').className = `rcard ${cc}`;
-      document.getElementById('rc').innerHTML = `
-  <div class="rhd">
-    <div class="rverdict">
-      <div class="v-ico">${ico}</div>
-      <div>
-        <div class="v-lbl ${cc}">${lbl}</div>
-        <div class="v-sub">${data.explanation}</div>
-        <div class="v-meta">
-          <span class="v-tag">🗣 ${data.language === 'te' ? 'Telugu' : 'English'}</span>
-          <span class="v-tag">· ${data.sources_checked.length} sources confirmed</span>
-        </div>
-      </div>
-    </div>
-    <div class="ccirc ${cc}"><div class="cpct">${pct}%</div><div class="clbl">CONFIDENCE</div></div>
-  </div>
-  <div class="sec-ttl">📡 Source Verification Results</div>
-  <div class="mlist">${matches}</div>
-  ${safeH}
-  <div class="fbrow">
-    <span class="fb-lbl">Was this correct?</span>
-    <div class="fbtns">
-      <button class="fbb ag" onclick="fb('agree')">👍 Yes</button>
-      <button class="fbb dg" onclick="fb('disagree')">👎 No</button>
-    </div>
-  </div>`;
-
-      document.getElementById('rb').classList.add('on');
-      document.getElementById('rb').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-
-    // ── HELPERS ───────────────────────────────────────────────────
-    function keywords(t) {
-      const sw = new Set(['the', 'a', 'an', 'is', 'it', 'in', 'on', 'at', 'to', 'for', 'of', 'and', 'or', 'but', 'not', 'this', 'that', 'was', 'are', 'be', 'with', 'from', 'by', 'as', 'will', 'have', 'has', 'all', 'its']);
-      return t.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 3 && !sw.has(w)).slice(0, 8);
-    }
-    function detectLang(t) { return /[\u0C00-\u0C7F]/.test(t) ? 'te' : 'en' }
-    function redFlags(t) {
-      const fl = []; const l = t.toLowerCase();
-      if (/breaking|urgent|alert/i.test(t)) fl.push('🚨 Urgency language');
-      if (/forward|share before|share now/i.test(t)) fl.push('📢 Calls to forward');
-      if ((t.match(/!/g) || []).length >= 2) fl.push('‼️ Excessive exclamation');
-      if (t.split(' ').filter(w => w === w.toUpperCase() && w.length > 2).length >= 3) fl.push('🔠 Excessive CAPS');
-      if (/free phone|free laptop|free money|apply now/i.test(t)) fl.push('💰 Scam/giveaway');
-      if (/cures|remedy|drink.*cure|ancient recipe/i.test(t)) fl.push('💊 Health misinformation');
-      if (/deleted|suppressed|hidden|they don.t want/i.test(t)) fl.push('🔒 Suppression claim');
-      if (/100%|guaranteed|confirmed/.test(l) && /free|cure|win|earn/.test(l)) fl.push('⚠️ False certainty');
-      return fl;
-    }
-    function lingScore(t, fl) {
-      let s = Math.min(fl.length * .14, .55);
-      s += Math.min((t.match(/!/g) || []).length * .05, .18);
-      s += Math.min(t.split(' ').filter(w => w === w.toUpperCase() && w.length > 2).length * .05, .18);
-      return Math.min(s, 1);
-    }
-    function esc(s) { return (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') }
-
-    // ── FIREBASE ──────────────────────────────────────────────────
-    // WHAT WE STORE IN FIREBASE (and why each field matters):
-    //   textHash     → SHA-256 of text, for deduplication only — text itself never stored
-    //   preview      → First 80 chars only, shown in the recent feed UI
-    //   label        → FAKE / REAL / UNVERIFIED — for stats computation
-    //   confidence   → Float 0–1, for analytics
-    //   sourcesOk    → How many sources confirmed, for feed display
-    //   sourcesTotal → Total sources checked
-    //   lang         → 'en' or 'te', for language distribution analytics
-    //   timestamp    → Server timestamp, for ordering the recent feed
-    //
-    // WHAT WE DON'T STORE:
-    //   ❌ Full news text (privacy — could contain sensitive content)
-    //   ❌ User IP / identity (no tracking)
-    //   ❌ Device info / browser fingerprint
-    //
-    // WHY FIREBASE OVER SQL:
-    //   ✅ Zero backend server needed (serverless)
-    //   ✅ Real-time listeners for live updating feed
-    //   ✅ Free tier covers 50k reads/day, 20k writes/day — plenty for this app
-    //   ✅ Firestore scales automatically
-    //   ✅ Works directly from the browser
-
-    async function sha256(msg) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
-      return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-    async function saveDB(text, v, lang) {
-      if (!window._fbReady) return;
-      try {
-        const { collection, addDoc, serverTimestamp } = window._fb;
-        const hash = await sha256(text);
-        const ref = await addDoc(collection(window._db, 'checks'), {
-          textHash: hash,
-          preview: text.substring(0, 80) + (text.length > 80 ? '…' : ''),
-          label: v.label, confidence: v.conf,
-          sourcesOk: v.ok, sourcesTotal: v.n,
-          lang, timestamp: serverTimestamp()
-        });
-        curId = ref.id;
-        loadStats(); loadRecent();
-      } catch (e) { console.log('Firebase (configure project):', e.message) }
-    }
-    async function fb(type) {
-      toast(type === 'agree' ? '👍 Thanks for confirming!' : '👎 Thanks, we\'ll improve!');
-      if (!curId || !window._fbReady) return;
-      try { const { doc, updateDoc } = window._fb; await updateDoc(doc(window._db, 'checks', curId), { feedback: type }) } catch (e) { }
-    }
-    async function loadStats() {
-      if (!window._fbReady) { document.getElementById('st').textContent = '—'; return }
-      try {
-        const { collection, getDocs } = window._fb;
-        const snap = await getDocs(collection(window._db, 'checks'));
-        const docs = snap.docs.map(d => d.data());
-        document.getElementById('st').textContent = docs.length || 0;
-        document.getElementById('sf').textContent = docs.filter(d => d.label === 'FAKE').length || 0;
-        document.getElementById('sr').textContent = docs.filter(d => d.label === 'REAL').length || 0;
-      } catch (e) { }
-    }
-    async function loadRecent() {
-      if (!window._fbReady) {
-        document.getElementById('fl').innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-weight:700;font-size:14px;">🔧 Add Firebase config to see live feed</div>';
-        return;
-      }
-      try {
-        const { collection, getDocs, query, orderBy, limit } = window._fb;
-        const q = query(collection(window._db, 'checks'), orderBy('timestamp', 'desc'), limit(8));
-        const snap = await getDocs(q);
-        const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        if (!items.length) { document.getElementById('fl').innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-weight:700">No checks yet — be first! ⚡</div>'; return }
-        document.getElementById('fl').innerHTML = items.map(it => {
-          const ic = it.label === 'FAKE' ? '🚨' : it.label === 'REAL' ? '✅' : '⚠️';
-          const bc = it.label === 'FAKE' ? 'fake' : it.label === 'REAL' ? 'real' : 'unv';
-          const lg = it.lang === 'te' ? '🔵 Telugu' : '🟠 English';
-          const sc = it.sourcesOk !== undefined ? `${it.sourcesOk}/${it.sourcesTotal} sources` : '';
-          return `<div class="fitem">
-        <div class="fi-ico">${ic}</div>
-        <div class="fi-c">
-          <div class="fi-t">${esc(it.preview || 'News check')}</div>
-          <div class="fi-m">
-            <span class="fi-b ${bc}">${it.label}</span>
-            <span class="fi-tm">${lg}${sc ? ' · ' + sc : ''}</span>
+      <!-- Stats -->
+      <div class="grid grid-cols-3 gap-4 max-w-2xl mx-auto text-left">
+        <div class="glass-card rounded-2xl p-5 border shadow-xl shadow-black/50">
+          <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1">Total Verified</div>
+          <div class="text-3xl font-bold text-white flex items-baseline gap-1">
+            <span id="stat-total" class="font-mono">--</span>
           </div>
         </div>
-      </div>`;
-        }).join('');
-      } catch (e) { document.getElementById('fl').innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:13px;font-weight:700">Connect Firebase to see live feed</div>' }
+        <div class="glass-card rounded-2xl p-5 border border-red-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
+          <div class="absolute inset-0 bg-red-500/5"></div>
+          <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Fake Detected</div>
+          <div class="text-3xl font-bold text-red-400 flex items-baseline gap-1 relative">
+            <span id="stat-fake" class="font-mono">--</span>
+          </div>
+        </div>
+        <div class="glass-card rounded-2xl p-5 border border-emerald-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
+          <div class="absolute inset-0 bg-emerald-500/5"></div>
+          <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Real Verified</div>
+          <div class="text-3xl font-bold text-emerald-400 flex items-baseline gap-1 relative">
+            <span id="stat-real" class="font-mono">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <div id="verify" class="grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+      
+      <!-- Left: Input & Engine -->
+      <div class="lg:col-span-7 flex flex-col gap-6">
+        
+        <!-- Input Card -->
+        <div class="glass-card rounded-3xl p-6 shadow-2xl shadow-indigo-500/5 border border-slate-700/50 relative overflow-hidden group">
+          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-50"></div>
+          
+          <div class="flex justify-between items-center mb-4">
+            <label class="text-sm font-semibold text-slate-300 tracking-wide">ENTER CLAIM TO VERIFY</label>
+            <span id="char-count" class="text-xs font-mono text-slate-500">0 / 2000</span>
+          </div>
+          
+          <textarea id="news-input" class="w-full h-40 bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none transition-all font-medium leading-relaxed shadow-inner" placeholder="Paste a headline, social media post, or WhatsApp forward here..."></textarea>
+          
+          <div class="flex items-center justify-between mt-5">
+            <div class="flex gap-2">
+              <button onclick="fillSample('fake')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Test Fake Claim</button>
+              <button onclick="fillSample('real')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Test Real Claim</button>
+            </div>
+            <button id="verify-btn" onclick="startVerification()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold tracking-wide shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-2 group-hover:animate-pulse-glow">
+              <span id="verify-btn-text">Verify Claim</span>
+              <svg id="verify-btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Progress/Thinking Card (Hidden initially) -->
+        <div id="progress-card" class="glass-card rounded-3xl p-6 hidden fade-in border border-indigo-500/20">
+          <div class="flex items-center gap-3 mb-6">
+            <div class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
+            <h3 class="font-semibold text-indigo-300 tracking-wide text-sm">ENGINES RUNNING...</h3>
+          </div>
+          <div class="space-y-4" id="step-container">
+            <!-- Steps injected here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Results & Sources -->
+      <div class="lg:col-span-5 flex flex-col gap-6">
+        
+        <!-- Result Panel (Hidden initially) -->
+        <div id="result-card" class="glass-card rounded-3xl p-6 hidden fade-in border border-slate-700/50 shadow-2xl relative overflow-hidden">
+          <div id="result-bg-glow" class="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20"></div>
+          
+          <div class="flex items-start justify-between mb-8">
+            <div>
+              <div class="text-xs font-bold tracking-widest text-slate-500 mb-1">FINAL VERDICT</div>
+              <h2 id="result-verdict" class="text-4xl font-black tracking-tight">--</h2>
+              <p id="result-lang" class="text-xs text-slate-400 mt-2 font-mono bg-slate-800 inline-block px-2 py-0.5 rounded"></p>
+            </div>
+            
+            <!-- Circular Progress -->
+            <div class="relative w-24 h-24 flex items-center justify-center">
+              <svg class="transform -rotate-90 w-24 h-24 absolute inset-0">
+                <circle cx="48" cy="48" r="42" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-800"></circle>
+                <circle id="score-ring" cx="48" cy="48" r="42" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="264" stroke-dashoffset="264" class="transition-all duration-1000 ease-out"></circle>
+              </svg>
+              <div class="flex flex-col items-center justify-center space-y-0 text-center relative z-10">
+                <span id="score-text" class="text-2xl font-black">0%</span>
+                <span class="text-[9px] font-bold text-slate-400 tracking-wider">CONFIDENCE</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="result-explanation" class="text-sm font-medium text-slate-300 bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 mb-6 leading-relaxed">
+            --
+          </div>
+
+          <div class="space-y-3">
+            <h4 class="text-xs font-bold tracking-widest text-slate-500">SOURCES MATCHED</h4>
+            <div id="result-sources" class="flex flex-col gap-2">
+              <!-- Result sources injected here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Trusted Sources Directory -->
+        <div id="sources-card" class="glass-card rounded-3xl p-6 border border-slate-700/50">
+          <h3 class="text-xs font-bold tracking-widest text-slate-500 mb-4">VERIFIED SOURCES INDEX</h3>
+          <div class="flex flex-wrap gap-2" id="source-badges">
+            <!-- Badges injected by JS -->
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Recent Checks Feed -->
+    <div id="feed" class="mt-16 fade-in">
+      <div class="flex items-center justify-between mb-6">
+        <h3 class="text-lg font-bold flex items-center gap-2">
+          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          Live Verification Feed
+        </h3>
+        <span class="flex h-3 w-3 relative">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+        </span>
+      </div>
+      <div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Feed cards injected here -->
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="mt-auto border-t border-slate-800 glass-panel">
+    <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between text-sm text-slate-500">
+      <div class="flex items-center gap-2 mb-4 md:mb-0">
+        <div class="w-6 h-6 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
+          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0"></path></svg>
+        </div>
+        <span class="font-bold text-slate-300">SatyaCheck AI</span>
+      </div>
+      <p>Powered by FastAPI & scikit-learn. No personal data logged.</p>
+    </div>
+  </footer>
+</div>
+
+<script>
+// --- UI State ---
+const KNOWN_SOURCES = [
+  { id: 'ndtv', name: 'NDTV' }, { id: 'reuters', name: 'Reuters' },
+  { id: 'bbc', name: 'BBC' }, { id: 'cnn', name: 'CNN' },
+  { id: 'tv9', name: 'TV9 Telugu' }, { id: 'abp', name: 'ABP News' },
+  { id: 'thehindu', name: 'The Hindu' }, { id: 'pib', name: 'PIB' }
+];
+
+const SAMPLES = {
+  fake: "BREAKING: Government is giving free 5G phones to all families! Apply now before December to claim your free mobile phone! Share with 10 people!",
+  real: "ISRO has successfully launched the latest communication satellite from Sriharikota spaceport yesterday morning, expanding internet connectivity."
+};
+
+let checking = false;
+
+// Initialize sources
+const sourceContainer = document.getElementById('source-badges');
+KNOWN_SOURCES.forEach(src => {
+  const el = document.createElement('div');
+  el.id = `src-${src.id}`;
+  el.className = 'px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/50 text-xs font-medium text-slate-400 transition-all duration-300';
+  el.innerText = src.name;
+  sourceContainer.appendChild(el);
+});
+
+// Textarea handling
+const input = document.getElementById('news-input');
+const counter = document.getElementById('char-count');
+input.addEventListener('input', () => {
+    counter.innerText = `${input.value.length} / 2000`;
+});
+
+function fillSample(type) {
+  input.value = SAMPLES[type];
+  counter.innerText = `${input.value.length} / 2000`;
+}
+
+// Steps config
+const STEPS = [
+  { id: 'ai', label: 'Running AI detection models' },
+  { id: 'ndtv', label: 'Scanning NDTV databases' },
+  { id: 'reut', label: 'Scanning Reuters archives' },
+  { id: 'goog', label: 'Checking Google News indexing' }
+];
+
+function resetVerificationUI() {
+  document.getElementById('result-card').classList.add('hidden');
+  const prog = document.getElementById('progress-card');
+  prog.classList.remove('hidden');
+  
+  const ctx = document.getElementById('step-container');
+  ctx.innerHTML = STEPS.map(s => `
+    <div id="step-${s.id}" class="flex items-center gap-4 text-sm text-slate-500 opacity-60 transition-all duration-300">
+      <div id="step-icon-${s.id}" class="w-6 h-6 rounded-full border border-slate-600 flex items-center justify-center bg-slate-800">
+        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle></svg>
+      </div>
+      <span id="step-lbl-${s.id}" class="font-medium">${s.label}</span>
+    </div>
+  `).join('');
+
+  KNOWN_SOURCES.forEach(src => {
+    const el = document.getElementById(`src-${src.id}`);
+    el.className = 'px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/50 text-xs font-medium text-slate-400 transition-all duration-300';
+  });
+}
+
+function updateStep(id, status) {
+  const row = document.getElementById(`step-${id}`);
+  const icon = document.getElementById(`step-icon-${id}`);
+  const lbl = document.getElementById(`step-lbl-${id}`);
+  
+  row.classList.remove('opacity-60', 'text-slate-500');
+  
+  if (status === 'running') {
+    row.classList.add('text-indigo-300', 'opacity-100');
+    icon.className = 'w-6 h-6 rounded-full border border-indigo-500 flex items-center justify-center bg-indigo-500/20';
+    icon.innerHTML = `<svg class="w-3 h-3 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+  } else if (status === 'done') {
+    row.classList.add('text-emerald-400', 'opacity-100');
+    icon.className = 'w-6 h-6 rounded-full border border-emerald-500 flex items-center justify-center bg-emerald-500/20';
+    icon.innerHTML = `<svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+  } else if (status === 'none') {
+    row.classList.add('text-slate-400', 'opacity-80');
+    icon.className = 'w-6 h-6 rounded-full border border-slate-600 flex items-center justify-center bg-transparent';
+    icon.innerHTML = `<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>`;
+  }
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+async function startVerification() {
+  const text = input.value.trim();
+  if (text.length < 5) {
+    alert("Please enter at least 5 characters to verify.");
+    return;
+  }
+  if (checking) return;
+  
+  checking = true;
+  const btn = document.getElementById('verify-btn');
+  const btnTxt = document.getElementById('verify-btn-text');
+  const btnIco = document.getElementById('verify-btn-icon');
+  
+  btnTxt.innerText = "Analyzing...";
+  btnIco.classList.add('animate-spin');
+  btnIco.innerHTML = `<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>`;
+  btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+  resetVerificationUI();
+
+  try {
+    updateStep('ai', 'running');
+    await sleep(600);
+
+    const res = await fetch("https://satyacheck-production.up.railway.app/api/check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+    });
+    if (!res.ok) throw new Error("API call failed");
+    const data = await res.json();
+
+    updateStep('ai', 'done');
+    
+    updateStep('ndtv', 'running');
+    await sleep(400);
+    const hasNdtv = data.sources_checked.includes('NDTV');
+    updateStep('ndtv', hasNdtv ? 'done' : 'none');
+    if(hasNdtv) highlightSource('ndtv');
+
+    updateStep('reut', 'running');
+    await sleep(400);
+    const hasReut = data.sources_checked.includes('Reuters');
+    updateStep('reut', hasReut ? 'done' : 'none');
+    if(hasReut) highlightSource('reuters');
+
+    updateStep('goog', 'running');
+    await sleep(400);
+    updateStep('goog', data.google_news_verified ? 'done' : 'none');
+
+    // Highlight any other found sources
+    for(let s of data.sources_checked) {
+      if(s !== 'NDTV' && s !== 'Reuters') {
+        const idMap = { 'BBC': 'bbc', 'CNN': 'cnn', 'TV9 Telugu': 'tv9', 'ABP News': 'abp', 'The Hindu': 'thehindu', 'PIB': 'pib' };
+        if(idMap[s]) highlightSource(idMap[s]);
+      }
     }
 
-    function toast(msg) {
-      const el = document.createElement('div'); el.className = 'toast'; el.textContent = msg;
-      document.body.appendChild(el); setTimeout(() => el.remove(), 2800);
-    }
+    await sleep(300);
+    document.getElementById('progress-card').classList.add('hidden');
+    renderResult(data);
 
-    // Init
-    document.addEventListener('fbReady', () => { loadStats(); loadRecent() });
-    setTimeout(() => { if (!window._fbReady) { loadRecent();[document.getElementById('st'), document.getElementById('sf'), document.getElementById('sr')].forEach(e => e && (e.textContent = '—')) } }, 2000);
-  </script>
+    setTimeout(() => {
+        if(window._fbReady) { loadStats(); loadRecent(); }
+    }, 1500);
+
+  } catch (e) {
+    console.error(e);
+    alert("Verification failed. Ensure FastAPI backend is running.");
+    document.getElementById('progress-card').classList.add('hidden');
+  }
+
+  checking = false;
+  btnTxt.innerText = "Verify Claim";
+  btnIco.classList.remove('animate-spin');
+  btnIco.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>`;
+  btn.classList.remove('opacity-75', 'cursor-not-allowed');
+}
+
+function highlightSource(id) {
+  const el = document.getElementById(`src-${id}`);
+  if(el) {
+    el.className = 'px-3 py-1.5 rounded-lg border border-emerald-500/50 bg-emerald-500/20 text-xs font-bold text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-300';
+  }
+}
+
+function renderResult(data) {
+  const resCard = document.getElementById('result-card');
+  const verdictEl = document.getElementById('result-verdict');
+  const langEl = document.getElementById('result-lang');
+  const expEl = document.getElementById('result-explanation');
+  const ring = document.getElementById('score-ring');
+  const scoreTxt = document.getElementById('score-text');
+  const bgGlow = document.getElementById('result-bg-glow');
+  const srcCont = document.getElementById('result-sources');
+  
+  resCard.classList.remove('hidden');
+
+  const isReal = data.verdict === 'Real';
+  const colorClass = isReal ? 'text-emerald-500' : 'text-red-500';
+  const ringColorList = isReal ? ['text-emerald-500'] : ['text-red-500'];
+  const bgClass = isReal ? 'bg-emerald-500' : 'bg-red-500';
+
+  verdictEl.innerText = isReal ? 'VERIFIED REAL' : 'LIKELY FAKE';
+  verdictEl.className = `text-3xl md:text-4xl font-black tracking-tight ${colorClass}`;
+  
+  bgGlow.className = `absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20 ${bgClass}`;
+
+  langEl.innerText = data.language === 'te' ? 'LANGUAGE: TELUGU' : 'LANGUAGE: ENGLISH';
+  expEl.innerText = data.explanation;
+
+  // Render sources matches in result box
+  let srcHTML = '';
+  if (data.google_news_verified) {
+    srcHTML += `<div class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700">
+      <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg></div>
+      <div class="text-sm font-semibold text-slate-200">Google News<div class="text-xs text-slate-400 font-normal">Found correlated stories</div></div>
+    </div>`;
+  }
+  data.sources_checked.forEach(s => {
+    srcHTML += `<div class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700">
+      <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
+      <div class="text-sm font-semibold text-slate-200">${s}<div class="text-xs text-slate-400 font-normal">Claim matched in archive</div></div>
+    </div>`;
+  });
+  if(srcHTML === '') {
+    srcHTML = `<div class="text-sm text-slate-500 italic p-2">No trusted sources corroborated this claim.</div>`;
+  }
+  srcCont.innerHTML = srcHTML;
+
+  // Animate circular meter
+  const pct = Math.round(data.confidence * 100);
+  ring.classList.remove('text-emerald-500', 'text-red-500', 'text-amber-500', 'text-slate-800');
+  let rc = isReal ? 'text-emerald-500' : 'text-red-500';
+  if(!isReal && pct < 65 && pct > 40) rc = 'text-amber-500';
+  ring.classList.add(rc);
+  scoreTxt.classList.remove('text-emerald-500', 'text-red-500', 'text-amber-500');
+  scoreTxt.classList.add(rc);
+
+  // Circumference = 2 * pi * r = 2 * 3.14 * 42 = 263.89
+  const circ = 264;
+  ring.style.strokeDashoffset = circ;
+  
+  setTimeout(() => {
+    const offset = circ - (pct / 100) * circ;
+    ring.style.strokeDashoffset = offset;
+    scoreTxt.innerText = `${pct}%`;
+  }, 100);
+}
+
+// --- Firebase Stats & Feed ---
+
+async function loadStats(){
+  if(!window._fbReady) return;
+  try{
+    const{collection,getDocs}=window._fb;
+    const snap=await getDocs(collection(window._db,'checks'));
+    const docs=snap.docs.map(d=>d.data());
+    
+    animateValue("stat-total", 0, docs.length || 0, 1000);
+    animateValue("stat-fake", 0, docs.filter(d=>d.label==='Fake').length || 0, 1000);
+    animateValue("stat-real", 0, docs.filter(d=>d.label==='Real').length || 0, 1000);
+  }catch(e){ console.error(e) }
+}
+
+function animateValue(id, start, end, duration) {
+  if (start === end) { document.getElementById(id).innerHTML = end; return; }
+  let range = end - start;
+  let current = start;
+  let increment = end > start ? 1 : -1;
+  let stepTime = Math.abs(Math.floor(duration / range));
+  if(stepTime < 20) stepTime = 20; // cap fast
+  let obj = document.getElementById(id);
+  let timer = setInterval(function() {
+      current += increment;
+      obj.innerHTML = current;
+      if (current == end) { clearInterval(timer); }
+  }, stepTime);
+}
+
+async function loadRecent(){
+  if(!window._fbReady) return;
+  const cont = document.getElementById('feed-container');
+  try{
+    const{collection,getDocs,query,orderBy,limit}=window._fb;
+    const q=query(collection(window._db,'checks'),orderBy('timestamp','desc'),limit(4));
+    const snap=await getDocs(q);
+    const items=snap.docs.map(d=>({id:d.id,...d.data()}));
+    
+    if(!items.length){ cont.innerHTML='<div class="col-span-full p-6 text-center text-slate-500">No recent checks available.</div>'; return; }
+    
+    cont.innerHTML = items.map(it=>{
+      const isReal = it.label === 'Real';
+      const clrClass = isReal ? 'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20' : 'text-red-400 bg-red-400/10 border border-red-400/20';
+      const conf = Math.round((it.confidence||0)*100);
+      return `
+        <div class="glass-card rounded-2xl p-4 border border-slate-700/50 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col justify-between h-36">
+          <p class="text-sm text-slate-300 font-medium line-clamp-2 leading-relaxed group-hover:text-white transition-colors">
+            ${it.preview || 'News check...'}
+          </p>
+          <div class="flex items-center justify-between mt-4">
+            <span class="px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${clrClass}">${it.label}</span>
+            <span class="text-xs font-mono text-slate-500">${conf}% conf</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }catch(e){ 
+    cont.innerHTML='<div class="col-span-full p-6 text-center text-slate-500">Error loading feed.</div>';
+  }
+}
+
+// Init
+document.addEventListener('fbReady', () => {
+    loadStats();
+    loadRecent();
+});
+setTimeout(() => { if(!window._fbReady) { document.getElementById('stat-total').innerText = 'offline'; } }, 3000);
+</script>
 </body>
-
 </html>
