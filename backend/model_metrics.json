@@ -1,0 +1,10 @@
+{
+  "accuracy": 0.9583333333333334,
+  "f1_score": 0.9584057971014494,
+  "roc_auc": 1.0,
+  "train_size": 93,
+  "test_size": 24,
+  "model_version": "2.0-indian",
+  "cv_f1_mean": 0.9262939958592133,
+  "cv_f1_std": 0.08390178147851887
+}
