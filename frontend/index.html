@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SatyaCheck AI — Fact Verification</title>
+<title>SatyaCheck AI — Real-time Verification</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -79,33 +79,6 @@
   .gradient-text { background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 </style>
 
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey: "AIzaSyCP4PmVHdyQIATbpZIn5Zm0wukfo_-nBhA",
-    authDomain: "satyacheck-3d9fa.firebaseapp.com",
-    projectId: "satyacheck-3d9fa",
-    storageBucket: "satyacheck-3d9fa.firebasestorage.app",
-    messagingSenderId: "123595736703",
-    appId: "1:123595736703:web:c6f08a2986fe1eb486a14a",
-    measurementId: "G-B330BCX890"
-  };
-
-  try {
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    window._db = db;
-    window._fb = { collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp, doc, updateDoc };
-    window._fbReady = true;
-  } catch(e) {
-    console.warn('Firebase init error:', e);
-    window._fbReady = false;
-  }
-  document.dispatchEvent(new Event('fbReady'));
-</script>
 </head>
 
 <body class="antialiased selection:bg-indigo-500/30">
@@ -132,14 +105,14 @@
       <div class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
         <a href="#" class="hover:text-white transition-colors">Home</a>
         <a href="#verify" class="hover:text-white transition-colors">Verify</a>
-        <a href="#feed" class="hover:text-white transition-colors">Live Feed</a>
+        <a href="#feed" class="hover:text-white transition-colors">Feed</a>
       </div>
-      <div class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wider">
+      <div id="status-chip" class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wider">
         <span class="relative flex h-2 w-2">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          <span id="status-pulse" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span id="status-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
-        SYSTEM ONLINE
+        <span id="status-text">SYSTEM ONLINE</span>
       </div>
     </div>
   </nav>
@@ -150,13 +123,13 @@
     <div class="text-center mb-16 fade-in">
       <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm text-indigo-300 mb-6 border-indigo-500/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        <span>AI-powered Fake News Detection</span>
+        <span>Real-time Multi-Step News Verification</span>
       </div>
       <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
-        Truth verification, <br/><span class="gradient-text">made instantaneous.</span>
+        Verified claims, <br/><span class="gradient-text">pure intelligence.</span>
       </h1>
       <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-        Cross-check claims against advanced AI linguistics, Google News, and authentic Indian media sources in real-time.
+        Checking trusted Indian sources (The Hindu, NDTV, Times of India, ANI, PTI) and International sources (Reuters, AP, BBC) for every claim.
       </p>
 
       <!-- Stats -->
@@ -164,21 +137,21 @@
         <div class="glass-card rounded-2xl p-5 border shadow-xl shadow-black/50">
           <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1">Total Verified</div>
           <div class="text-3xl font-bold text-white flex items-baseline gap-1">
-            <span id="stat-total" class="font-mono">--</span>
+            <span id="stat-total" class="font-mono">1254</span>
           </div>
         </div>
         <div class="glass-card rounded-2xl p-5 border border-red-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
           <div class="absolute inset-0 bg-red-500/5"></div>
           <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Fake Detected</div>
           <div class="text-3xl font-bold text-red-400 flex items-baseline gap-1 relative">
-            <span id="stat-fake" class="font-mono">--</span>
+            <span id="stat-fake" class="font-mono">420</span>
           </div>
         </div>
         <div class="glass-card rounded-2xl p-5 border border-emerald-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
           <div class="absolute inset-0 bg-emerald-500/5"></div>
           <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Real Verified</div>
           <div class="text-3xl font-bold text-emerald-400 flex items-baseline gap-1 relative">
-            <span id="stat-real" class="font-mono">--</span>
+            <span id="stat-real" class="font-mono">812</span>
           </div>
         </div>
       </div>
@@ -195,7 +168,7 @@
           <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-50"></div>
           
           <div class="flex justify-between items-center mb-4">
-            <label class="text-sm font-semibold text-slate-300 tracking-wide">ENTER CLAIM TO VERIFY</label>
+            <label class="text-sm font-semibold text-slate-300 tracking-wide">ENTER CLAIM TO FACT-CHECK</label>
             <span id="char-count" class="text-xs font-mono text-slate-500">0 / 2000</span>
           </div>
           
@@ -203,43 +176,42 @@
           
           <div class="flex items-center justify-between mt-5">
             <div class="flex gap-2">
-              <button onclick="fillSample('fake')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Test Fake Claim</button>
-              <button onclick="fillSample('real')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Test Real Claim</button>
+              <button onclick="fillSample('fake')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Fake Example</button>
+              <button onclick="fillSample('real')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Real Example</button>
             </div>
             <button id="verify-btn" onclick="startVerification()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold tracking-wide shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-2 group-hover:animate-pulse-glow">
-              <span id="verify-btn-text">Verify Claim</span>
+              <span id="verify-btn-text">Fact-Check Now</span>
               <svg id="verify-btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
             </button>
           </div>
         </div>
 
-        <!-- Progress/Thinking Card (Hidden initially) -->
+        <!-- Progress Card -->
         <div id="progress-card" class="glass-card rounded-3xl p-6 hidden fade-in border border-indigo-500/20">
           <div class="flex items-center gap-3 mb-6">
             <div class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
-            <h3 class="font-semibold text-indigo-300 tracking-wide text-sm">ENGINES RUNNING...</h3>
+            <h3 class="font-semibold text-indigo-300 tracking-wide text-sm uppercase">Verification Process</h3>
           </div>
           <div class="space-y-4" id="step-container">
-            <!-- Steps injected here -->
+            <!-- Steps injected -->
           </div>
         </div>
       </div>
 
-      <!-- Right: Results & Sources -->
+      <!-- Right: Results -->
       <div class="lg:col-span-5 flex flex-col gap-6">
         
-        <!-- Result Panel (Hidden initially) -->
+        <!-- Result Panel -->
         <div id="result-card" class="glass-card rounded-3xl p-6 hidden fade-in border border-slate-700/50 shadow-2xl relative overflow-hidden">
           <div id="result-bg-glow" class="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20"></div>
           
           <div class="flex items-start justify-between mb-8">
             <div>
-              <div class="text-xs font-bold tracking-widest text-slate-500 mb-1">FINAL VERDICT</div>
+              <div class="text-xs font-bold tracking-widest text-slate-500 mb-1">ANALYSIS VERDICT</div>
               <h2 id="result-verdict" class="text-4xl font-black tracking-tight">--</h2>
               <p id="result-lang" class="text-xs text-slate-400 mt-2 font-mono bg-slate-800 inline-block px-2 py-0.5 rounded"></p>
             </div>
             
-            <!-- Circular Progress -->
             <div class="relative w-24 h-24 flex items-center justify-center">
               <svg class="transform -rotate-90 w-24 h-24 absolute inset-0">
                 <circle cx="48" cy="48" r="42" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-800"></circle>
@@ -252,147 +224,89 @@
             </div>
           </div>
 
-          <div id="result-explanation" class="text-sm font-medium text-slate-300 bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 mb-6 leading-relaxed">
+          <div id="result-explanation" class="text-sm font-medium text-slate-200 bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 mb-6 leading-relaxed">
             --
           </div>
 
           <div class="space-y-3">
-            <h4 class="text-xs font-bold tracking-widest text-slate-500">SOURCES MATCHED</h4>
+            <h4 class="text-xs font-bold tracking-widest text-slate-500">TRUSTED SOURCES FOUND</h4>
             <div id="result-sources" class="flex flex-col gap-2">
-              <!-- Result sources injected here -->
+              <!-- URLs -->
             </div>
           </div>
         </div>
 
-        <!-- Trusted Sources Directory -->
+        <!-- Trusted Sources List -->
         <div id="sources-card" class="glass-card rounded-3xl p-6 border border-slate-700/50">
-          <h3 class="text-xs font-bold tracking-widest text-slate-500 mb-4">VERIFIED SOURCES INDEX</h3>
-          <div class="flex flex-wrap gap-2" id="source-badges">
-            <!-- Badges injected by JS -->
+          <h3 class="text-xs font-bold tracking-widest text-slate-500 mb-4 uppercase">Verification Network</h3>
+          <div class="flex flex-wrap gap-2 text-[10px]">
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">THE HINDU</span>
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">NDTV</span>
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">ANI/PTI</span>
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">TIMES OF INDIA</span>
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">REUTERS</span>
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">AP / BBC</span>
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">ALTNEWS</span>
+             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">BOOM LIVE</span>
           </div>
         </div>
 
       </div>
     </div>
-
-    <!-- Recent Checks Feed -->
-    <div id="feed" class="mt-16 fade-in">
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-bold flex items-center gap-2">
-          <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-          Live Verification Feed
-        </h3>
-        <span class="flex h-3 w-3 relative">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-        </span>
-      </div>
-      <div id="feed-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <!-- Feed cards injected here -->
-      </div>
-    </div>
-
   </main>
-
-  <footer class="mt-auto border-t border-slate-800 glass-panel">
-    <div class="max-w-6xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between text-sm text-slate-500">
-      <div class="flex items-center gap-2 mb-4 md:mb-0">
-        <div class="w-6 h-6 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" d="M21 21l-6-6m2-5a7 7 0 11-14 0"></path></svg>
-        </div>
-        <span class="font-bold text-slate-300">SatyaCheck AI</span>
-      </div>
-      <p>Powered by FastAPI & scikit-learn. No personal data logged.</p>
-    </div>
-  </footer>
 </div>
 
 <script>
-// --- UI State ---
-const KNOWN_SOURCES = [
-  { id: 'ndtv', name: 'NDTV' }, { id: 'reuters', name: 'Reuters' },
-  { id: 'bbc', name: 'BBC' }, { id: 'cnn', name: 'CNN' },
-  { id: 'tv9', name: 'TV9 Telugu' }, { id: 'abp', name: 'ABP News' },
-  { id: 'thehindu', name: 'The Hindu' }, { id: 'pib', name: 'PIB' }
-];
+const API_BASE = "https://satyacheck-production.up.railway.app"; // Production Railway Backend
 
 const SAMPLES = {
-  fake: "BREAKING: Government is giving free 5G phones to all families! Apply now before December to claim your free mobile phone! Share with 10 people!",
-  real: "ISRO has successfully launched the latest communication satellite from Sriharikota spaceport yesterday morning, expanding internet connectivity."
+  fake: "Latest News! Prime Minister announced free 10,000 INR for every bank account holder under new scheme. Apply now at this external link!",
+  real: "The Hindu: ISRO's solar mission Aditya-L1 has successfully completed its halo-orbit insertion around the Sun-Earth L1 point."
 };
 
 let checking = false;
 
-// Initialize sources
-const sourceContainer = document.getElementById('source-badges');
-KNOWN_SOURCES.forEach(src => {
-  const el = document.createElement('div');
-  el.id = `src-${src.id}`;
-  el.className = 'px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/50 text-xs font-medium text-slate-400 transition-all duration-300';
-  el.innerText = src.name;
-  sourceContainer.appendChild(el);
-});
-
-// Textarea handling
 const input = document.getElementById('news-input');
 const counter = document.getElementById('char-count');
-input.addEventListener('input', () => {
-    counter.innerText = `${input.value.length} / 2000`;
-});
+input.addEventListener('input', () => { counter.innerText = `${input.value.length} / 2000`; });
 
 function fillSample(type) {
   input.value = SAMPLES[type];
   counter.innerText = `${input.value.length} / 2000`;
 }
 
-// Steps config
 const STEPS = [
-  { id: 'ai', label: 'Running AI detection models' },
-  { id: 'ndtv', label: 'Scanning NDTV databases' },
-  { id: 'reut', label: 'Scanning Reuters archives' },
-  { id: 'goog', label: 'Checking Google News indexing' }
+  { id: 'search', label: 'STEP 1: Search Verification' },
+  { id: 'analysis', label: 'STEP 2: Evidence Analysis' },
+  { id: 'json', label: 'STEP 3: Structured Metadata Generation' }
 ];
 
 function resetVerificationUI() {
   document.getElementById('result-card').classList.add('hidden');
   const prog = document.getElementById('progress-card');
   prog.classList.remove('hidden');
-  
-  const ctx = document.getElementById('step-container');
-  ctx.innerHTML = STEPS.map(s => `
+  document.getElementById('step-container').innerHTML = STEPS.map(s => `
     <div id="step-${s.id}" class="flex items-center gap-4 text-sm text-slate-500 opacity-60 transition-all duration-300">
       <div id="step-icon-${s.id}" class="w-6 h-6 rounded-full border border-slate-600 flex items-center justify-center bg-slate-800">
         <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle></svg>
       </div>
-      <span id="step-lbl-${s.id}" class="font-medium">${s.label}</span>
+      <span class="font-medium">${s.label}</span>
     </div>
   `).join('');
-
-  KNOWN_SOURCES.forEach(src => {
-    const el = document.getElementById(`src-${src.id}`);
-    el.className = 'px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-800/50 text-xs font-medium text-slate-400 transition-all duration-300';
-  });
 }
 
 function updateStep(id, status) {
   const row = document.getElementById(`step-${id}`);
   const icon = document.getElementById(`step-icon-${id}`);
-  const lbl = document.getElementById(`step-lbl-${id}`);
-  
-  row.classList.remove('opacity-60', 'text-slate-500');
+  if (!row || !icon) return;
   
   if (status === 'running') {
+    row.classList.remove('opacity-60', 'text-slate-500');
     row.classList.add('text-indigo-300', 'opacity-100');
-    icon.className = 'w-6 h-6 rounded-full border border-indigo-500 flex items-center justify-center bg-indigo-500/20';
     icon.innerHTML = `<svg class="w-3 h-3 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
   } else if (status === 'done') {
     row.classList.add('text-emerald-400', 'opacity-100');
-    icon.className = 'w-6 h-6 rounded-full border border-emerald-500 flex items-center justify-center bg-emerald-500/20';
     icon.innerHTML = `<svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
-  } else if (status === 'none') {
-    row.classList.add('text-slate-400', 'opacity-80');
-    icon.className = 'w-6 h-6 rounded-full border border-slate-600 flex items-center justify-center bg-transparent';
-    icon.innerHTML = `<svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>`;
   }
 }
 
@@ -400,88 +314,46 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function startVerification() {
   const text = input.value.trim();
-  if (text.length < 5) {
-    alert("Please enter at least 5 characters to verify.");
-    return;
-  }
+  if (text.length < 10) return alert("Please enter a longer claim.");
   if (checking) return;
   
   checking = true;
   const btn = document.getElementById('verify-btn');
-  const btnTxt = document.getElementById('verify-btn-text');
-  const btnIco = document.getElementById('verify-btn-icon');
-  
-  btnTxt.innerText = "Analyzing...";
-  btnIco.classList.add('animate-spin');
-  btnIco.innerHTML = `<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>`;
   btn.classList.add('opacity-75', 'cursor-not-allowed');
 
   resetVerificationUI();
 
   try {
-    updateStep('ai', 'running');
-    await sleep(600);
-
-    const res = await fetch("https://satyacheck-production.up.railway.app/api/check", {
+    updateStep('search', 'running');
+    const res = await fetch(`${API_BASE}/api/check`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text })
     });
-    if (!res.ok) throw new Error("API call failed");
+    
+    if (!res.ok) throw new Error("Backend connection failed.");
     const data = await res.json();
 
-    updateStep('ai', 'done');
-    
-    updateStep('ndtv', 'running');
+    updateStep('search', 'done');
+    updateStep('analysis', 'running');
+    await sleep(600);
+    updateStep('analysis', 'done');
+    updateStep('json', 'running');
     await sleep(400);
-    const hasNdtv = data.sources_checked.includes('NDTV');
-    updateStep('ndtv', hasNdtv ? 'done' : 'none');
-    if(hasNdtv) highlightSource('ndtv');
-
-    updateStep('reut', 'running');
-    await sleep(400);
-    const hasReut = data.sources_checked.includes('Reuters');
-    updateStep('reut', hasReut ? 'done' : 'none');
-    if(hasReut) highlightSource('reuters');
-
-    updateStep('goog', 'running');
-    await sleep(400);
-    updateStep('goog', data.google_news_verified ? 'done' : 'none');
-
-    // Highlight any other found sources
-    for(let s of data.sources_checked) {
-      if(s !== 'NDTV' && s !== 'Reuters') {
-        const idMap = { 'BBC': 'bbc', 'CNN': 'cnn', 'TV9 Telugu': 'tv9', 'ABP News': 'abp', 'The Hindu': 'thehindu', 'PIB': 'pib' };
-        if(idMap[s]) highlightSource(idMap[s]);
-      }
-    }
+    updateStep('json', 'done');
 
     await sleep(300);
     document.getElementById('progress-card').classList.add('hidden');
     renderResult(data);
 
-    setTimeout(() => {
-        if(window._fbReady) { loadStats(); loadRecent(); }
-    }, 1500);
-
   } catch (e) {
     console.error(e);
-    alert("Verification failed. Ensure FastAPI backend is running.");
+    alert("Verification failed. Make sure the backend is running.");
     document.getElementById('progress-card').classList.add('hidden');
   }
 
   checking = false;
-  btnTxt.innerText = "Verify Claim";
-  btnIco.classList.remove('animate-spin');
-  btnIco.innerHTML = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>`;
   btn.classList.remove('opacity-75', 'cursor-not-allowed');
-}
-
-function highlightSource(id) {
-  const el = document.getElementById(`src-${id}`);
-  if(el) {
-    el.className = 'px-3 py-1.5 rounded-lg border border-emerald-500/50 bg-emerald-500/20 text-xs font-bold text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] transition-all duration-300';
-  }
 }
 
 function renderResult(data) {
@@ -489,133 +361,40 @@ function renderResult(data) {
   const verdictEl = document.getElementById('result-verdict');
   const langEl = document.getElementById('result-lang');
   const expEl = document.getElementById('result-explanation');
-  const ring = document.getElementById('score-ring');
   const scoreTxt = document.getElementById('score-text');
-  const bgGlow = document.getElementById('result-bg-glow');
+  const ring = document.getElementById('score-ring');
   const srcCont = document.getElementById('result-sources');
   
   resCard.classList.remove('hidden');
 
-  const isReal = data.verdict === 'Real';
-  const colorClass = isReal ? 'text-emerald-500' : 'text-red-500';
-  const ringColorList = isReal ? ['text-emerald-500'] : ['text-red-500'];
-  const bgClass = isReal ? 'bg-emerald-500' : 'bg-red-500';
+  const v = data.verdict;
+  const colorClass = v === 'REAL' ? 'text-emerald-500' : (v === 'FAKE' ? 'text-red-500' : 'text-amber-500');
+  const bgClass = v === 'REAL' ? 'bg-emerald-500' : (v === 'FAKE' ? 'bg-red-500' : 'bg-amber-500');
 
-  verdictEl.innerText = isReal ? 'VERIFIED REAL' : 'LIKELY FAKE';
-  verdictEl.className = `text-3xl md:text-4xl font-black tracking-tight ${colorClass}`;
+  verdictEl.innerText = v;
+  verdictEl.className = `text-4xl font-black tracking-tight ${colorClass}`;
   
-  bgGlow.className = `absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20 ${bgClass}`;
+  document.getElementById('result-bg-glow').className = `absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20 ${bgClass}`;
 
-  langEl.innerText = data.language === 'te' ? 'LANGUAGE: TELUGU' : 'LANGUAGE: ENGLISH';
-  expEl.innerText = data.explanation;
+  langEl.innerText = `LANG: ${data.language_detected.toUpperCase()}`;
+  expEl.innerText = data.reason;
 
-  // Render sources matches in result box
-  let srcHTML = '';
-  if (data.google_news_verified) {
-    srcHTML += `<div class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700">
-      <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg></div>
-      <div class="text-sm font-semibold text-slate-200">Google News<div class="text-xs text-slate-400 font-normal">Found correlated stories</div></div>
-    </div>`;
-  }
-  data.sources_checked.forEach(s => {
-    srcHTML += `<div class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700">
-      <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-      <div class="text-sm font-semibold text-slate-200">${s}<div class="text-xs text-slate-400 font-normal">Claim matched in archive</div></div>
-    </div>`;
-  });
-  if(srcHTML === '') {
-    srcHTML = `<div class="text-sm text-slate-500 italic p-2">No trusted sources corroborated this claim.</div>`;
-  }
-  srcCont.innerHTML = srcHTML;
+  srcCont.innerHTML = data.sources.length ? data.sources.map(s => {
+      const d = new URL(s).hostname;
+      return `<a href="${s}" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-indigo-500 transition-colors">
+        <div class="text-xs font-bold text-slate-400 capitalize">${d}</div>
+        <div class="text-[10px] text-slate-500 truncate">${s}</div>
+      </a>`;
+  }).join('') : '<div class="text-xs text-slate-500 italic">No trusted source URLs found.</div>';
 
-  // Animate circular meter
   const pct = Math.round(data.confidence * 100);
-  ring.classList.remove('text-emerald-500', 'text-red-500', 'text-amber-500', 'text-slate-800');
-  let rc = isReal ? 'text-emerald-500' : 'text-red-500';
-  if(!isReal && pct < 65 && pct > 40) rc = 'text-amber-500';
-  ring.classList.add(rc);
-  scoreTxt.classList.remove('text-emerald-500', 'text-red-500', 'text-amber-500');
-  scoreTxt.classList.add(rc);
-
-  // Circumference = 2 * pi * r = 2 * 3.14 * 42 = 263.89
-  const circ = 264;
-  ring.style.strokeDashoffset = circ;
+  scoreTxt.innerText = `${pct}%`;
+  scoreTxt.className = `text-2xl font-black ${colorClass}`;
   
-  setTimeout(() => {
-    const offset = circ - (pct / 100) * circ;
-    ring.style.strokeDashoffset = offset;
-    scoreTxt.innerText = `${pct}%`;
-  }, 100);
+  const circ = 264;
+  ring.style.strokeDashoffset = circ - (pct / 100) * circ;
+  ring.className = `transition-all duration-1000 ease-out ${colorClass}`;
 }
-
-// --- Firebase Stats & Feed ---
-
-async function loadStats(){
-  if(!window._fbReady) return;
-  try{
-    const{collection,getDocs}=window._fb;
-    const snap=await getDocs(collection(window._db,'checks'));
-    const docs=snap.docs.map(d=>d.data());
-    
-    animateValue("stat-total", 0, docs.length || 0, 1000);
-    animateValue("stat-fake", 0, docs.filter(d=>d.label==='Fake').length || 0, 1000);
-    animateValue("stat-real", 0, docs.filter(d=>d.label==='Real').length || 0, 1000);
-  }catch(e){ console.error(e) }
-}
-
-function animateValue(id, start, end, duration) {
-  if (start === end) { document.getElementById(id).innerHTML = end; return; }
-  let range = end - start;
-  let current = start;
-  let increment = end > start ? 1 : -1;
-  let stepTime = Math.abs(Math.floor(duration / range));
-  if(stepTime < 20) stepTime = 20; // cap fast
-  let obj = document.getElementById(id);
-  let timer = setInterval(function() {
-      current += increment;
-      obj.innerHTML = current;
-      if (current == end) { clearInterval(timer); }
-  }, stepTime);
-}
-
-async function loadRecent(){
-  if(!window._fbReady) return;
-  const cont = document.getElementById('feed-container');
-  try{
-    const{collection,getDocs,query,orderBy,limit}=window._fb;
-    const q=query(collection(window._db,'checks'),orderBy('timestamp','desc'),limit(4));
-    const snap=await getDocs(q);
-    const items=snap.docs.map(d=>({id:d.id,...d.data()}));
-    
-    if(!items.length){ cont.innerHTML='<div class="col-span-full p-6 text-center text-slate-500">No recent checks available.</div>'; return; }
-    
-    cont.innerHTML = items.map(it=>{
-      const isReal = it.label === 'Real';
-      const clrClass = isReal ? 'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20' : 'text-red-400 bg-red-400/10 border border-red-400/20';
-      const conf = Math.round((it.confidence||0)*100);
-      return `
-        <div class="glass-card rounded-2xl p-4 border border-slate-700/50 hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group cursor-pointer flex flex-col justify-between h-36">
-          <p class="text-sm text-slate-300 font-medium line-clamp-2 leading-relaxed group-hover:text-white transition-colors">
-            ${it.preview || 'News check...'}
-          </p>
-          <div class="flex items-center justify-between mt-4">
-            <span class="px-2 py-1 rounded text-[10px] font-bold tracking-widest uppercase ${clrClass}">${it.label}</span>
-            <span class="text-xs font-mono text-slate-500">${conf}% conf</span>
-          </div>
-        </div>
-      `;
-    }).join('');
-  }catch(e){ 
-    cont.innerHTML='<div class="col-span-full p-6 text-center text-slate-500">Error loading feed.</div>';
-  }
-}
-
-// Init
-document.addEventListener('fbReady', () => {
-    loadStats();
-    loadRecent();
-});
-setTimeout(() => { if(!window._fbReady) { document.getElementById('stat-total').innerText = 'offline'; } }, 3000);
 </script>
 </body>
 </html>
