@@ -3,7 +3,7 @@
 
 AI-powered fake news detection for **English and Telugu** news, built with FastAPI, scikit-learn, HTMX, and PostgreSQL.
 
----
+--
 
 ## 📸 Features
 
