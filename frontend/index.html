@@ -1,291 +1,382 @@
 <!DOCTYPE html>
 <html lang="en" class="dark">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SatyaCheck AI — Real-time Verification</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SatyaCheck AI — Real-time Verification</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
 
-<script>
-  tailwind.config = {
-    darkMode: 'class',
-    theme: {
-      extend: {
-        fontFamily: { sans: ['Inter', 'sans-serif'] },
-        colors: {
-          bgBase: '#0b1120',
-          cardBg: 'rgba(255, 255, 255, 0.04)',
-          cardBorder: 'rgba(255, 255, 255, 0.08)',
-          primary: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' }
-        },
-        animation: {
-          'gradient-x': 'gradient-x 15s ease infinite',
-          'blob': 'blob 7s infinite',
-          'spin-slow': 'spin 3s linear infinite',
-          'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        },
-        keyframes: {
-          'gradient-x': {
-            '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
-            '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            bgBase: '#0b1120',
+            cardBg: 'rgba(255, 255, 255, 0.04)',
+            cardBorder: 'rgba(255, 255, 255, 0.08)',
+            primary: { 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' }
           },
-          'blob': {
-            '0%': { transform: 'translate(0px, 0px) scale(1)' },
-            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
-            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
-            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+          animation: {
+            'gradient-x': 'gradient-x 15s ease infinite',
+            'blob': 'blob 7s infinite',
+            'spin-slow': 'spin 3s linear infinite',
+            'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
           },
-          'pulse-glow': {
-            '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(99, 102, 241, 0.5)' },
-            '50%': { opacity: '.7', boxShadow: '0 0 5px rgba(99, 102, 241, 0.2)' },
+          keyframes: {
+            'gradient-x': {
+              '0%, 100%': { 'background-size': '200% 200%', 'background-position': 'left center' },
+              '50%': { 'background-size': '200% 200%', 'background-position': 'right center' },
+            },
+            'blob': {
+              '0%': { transform: 'translate(0px, 0px) scale(1)' },
+              '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+              '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+              '100%': { transform: 'translate(0px, 0px) scale(1)' },
+            },
+            'pulse-glow': {
+              '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(99, 102, 241, 0.5)' },
+              '50%': { opacity: '.7', boxShadow: '0 0 5px rgba(99, 102, 241, 0.2)' },
+            }
           }
         }
       }
     }
-  }
-</script>
+  </script>
 
-<style>
-  body { background-color: #0F172A; color: #F8FAFC; overflow-x: hidden; }
-  .glass-card { background: rgba(255,255,255,0.03); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.08); }
-  .glass-panel { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(24px); border-bottom: 1px solid rgba(255,255,255,0.05); }
-  .text-glow { text-shadow: 0 0 20px rgba(99,102,241,0.5); }
-  
-  /* Circular Progress */
-  .progress-ring__circle {
-    transition: stroke-dashoffset 0.8s ease-in-out;
-    transform: rotate(-90deg);
-    transform-origin: 50% 50%;
-  }
+  <style>
+    body {
+      background-color: #0F172A;
+      color: #F8FAFC;
+      overflow-x: hidden;
+    }
 
-  /* Custom Scrollbar */
-  ::-webkit-scrollbar { width: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 4px; }
-  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
 
-  .fade-in { animation: fadeIn 0.4s ease-out forwards; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(24px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
 
-  .bg-noise {
-      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-      pointer-events: none; z-index: 50; opacity: 0.03;
+    .text-glow {
+      text-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+    }
+
+    /* Circular Progress */
+    .progress-ring__circle {
+      transition: stroke-dashoffset 0.8s ease-in-out;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .fade-in {
+      animation: fadeIn 0.4s ease-out forwards;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .bg-noise {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 50;
+      opacity: 0.03;
       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-  }
+    }
 
-  .gradient-text { background: linear-gradient(to right, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-</style>
+    .gradient-text {
+      background: linear-gradient(to right, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
 
 </head>
 
 <body class="antialiased selection:bg-indigo-500/30">
-<div class="bg-noise"></div>
+  <div class="bg-noise"></div>
 
-<!-- Background Elements -->
-<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
-  <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 mix-blend-screen filter blur-[100px] animate-blob"></div>
-  <div class="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000"></div>
-  <div class="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] rounded-full bg-blue-600/10 mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000"></div>
-</div>
-
-<div class="relative z-10 flex flex-col min-h-screen content-wrapper">
-  
-  <!-- Navbar -->
-  <nav class="fixed top-0 w-full glass-panel z-50">
-    <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        </div>
-        <span class="font-bold text-xl tracking-tight">Satya<span class="text-indigo-400">Check</span></span>
-      </div>
-      <div class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
-        <a href="#" class="hover:text-white transition-colors">Home</a>
-        <a href="#verify" class="hover:text-white transition-colors">Verify</a>
-        <a href="#feed" class="hover:text-white transition-colors">Feed</a>
-      </div>
-      <div id="status-chip" class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wider">
-        <span class="relative flex h-2 w-2">
-          <span id="status-pulse" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-          <span id="status-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-        </span>
-        <span id="status-text">SYSTEM ONLINE</span>
-      </div>
+  <!-- Background Elements -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+    <div
+      class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-indigo-600/20 mix-blend-screen filter blur-[100px] animate-blob">
     </div>
-  </nav>
-
-  <main class="flex-grow pt-32 pb-20 px-4 md:px-8 max-w-5xl mx-auto w-full">
-    
-    <!-- Hero -->
-    <div class="text-center mb-16 fade-in">
-      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm text-indigo-300 mb-6 border-indigo-500/20">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-        <span>Real-time Multi-Step News Verification</span>
-      </div>
-      <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
-        Verified claims, <br/><span class="gradient-text">pure intelligence.</span>
-      </h1>
-      <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
-        Checking trusted Indian sources (The Hindu, NDTV, Times of India, ANI, PTI) and International sources (Reuters, AP, BBC) for every claim.
-      </p>
-
-      <!-- Stats -->
-      <div class="grid grid-cols-3 gap-4 max-w-2xl mx-auto text-left">
-        <div class="glass-card rounded-2xl p-5 border shadow-xl shadow-black/50">
-          <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1">Total Verified</div>
-          <div class="text-3xl font-bold text-white flex items-baseline gap-1">
-            <span id="stat-total" class="font-mono">1254</span>
-          </div>
-        </div>
-        <div class="glass-card rounded-2xl p-5 border border-red-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
-          <div class="absolute inset-0 bg-red-500/5"></div>
-          <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Fake Detected</div>
-          <div class="text-3xl font-bold text-red-400 flex items-baseline gap-1 relative">
-            <span id="stat-fake" class="font-mono">420</span>
-          </div>
-        </div>
-        <div class="glass-card rounded-2xl p-5 border border-emerald-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
-          <div class="absolute inset-0 bg-emerald-500/5"></div>
-          <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Real Verified</div>
-          <div class="text-3xl font-bold text-emerald-400 flex items-baseline gap-1 relative">
-            <span id="stat-real" class="font-mono">812</span>
-          </div>
-        </div>
-      </div>
+    <div
+      class="absolute top-[20%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/20 mix-blend-screen filter blur-[100px] animate-blob animation-delay-2000">
     </div>
+    <div
+      class="absolute bottom-[-20%] left-[20%] w-[50%] h-[50%] rounded-full bg-blue-600/10 mix-blend-screen filter blur-[100px] animate-blob animation-delay-4000">
+    </div>
+  </div>
 
-    <!-- Main Workspace -->
-    <div id="verify" class="grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
-      
-      <!-- Left: Input & Engine -->
-      <div class="lg:col-span-7 flex flex-col gap-6">
-        
-        <!-- Input Card -->
-        <div class="glass-card rounded-3xl p-6 shadow-2xl shadow-indigo-500/5 border border-slate-700/50 relative overflow-hidden group">
-          <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-50"></div>
-          
-          <div class="flex justify-between items-center mb-4">
-            <label class="text-sm font-semibold text-slate-300 tracking-wide">ENTER CLAIM TO FACT-CHECK</label>
-            <span id="char-count" class="text-xs font-mono text-slate-500">0 / 2000</span>
+  <div class="relative z-10 flex flex-col min-h-screen content-wrapper">
+
+    <!-- Navbar -->
+    <nav class="fixed top-0 w-full glass-panel z-50">
+      <div class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div
+            class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
           </div>
-          
-          <textarea id="news-input" class="w-full h-40 bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none transition-all font-medium leading-relaxed shadow-inner" placeholder="Paste a headline, social media post, or WhatsApp forward here..."></textarea>
-          
-          <div class="flex items-center justify-between mt-5">
-            <div class="flex gap-2">
-              <button onclick="fillSample('fake')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Fake Example</button>
-              <button onclick="fillSample('real')" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Real Example</button>
-            </div>
-            <button id="verify-btn" onclick="startVerification()" class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold tracking-wide shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-2 group-hover:animate-pulse-glow">
-              <span id="verify-btn-text">Fact-Check Now</span>
-              <svg id="verify-btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-            </button>
-          </div>
+          <span class="font-bold text-xl tracking-tight">Satya<span class="text-indigo-400">Check</span></span>
         </div>
+        <div class="hidden md:flex gap-8 text-sm font-medium text-slate-300">
+          <a href="#" class="hover:text-white transition-colors">Home</a>
+          <a href="#verify" class="hover:text-white transition-colors">Verify</a>
+          <a href="#feed" class="hover:text-white transition-colors">Feed</a>
+        </div>
+        <div id="status-chip"
+          class="flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-xs font-bold tracking-wider">
+          <span class="relative flex h-2 w-2">
+            <span id="status-pulse"
+              class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span id="status-dot" class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span id="status-text">SYSTEM ONLINE</span>
+        </div>
+      </div>
+    </nav>
 
-        <!-- Progress Card -->
-        <div id="progress-card" class="glass-card rounded-3xl p-6 hidden fade-in border border-indigo-500/20">
-          <div class="flex items-center gap-3 mb-6">
-            <div class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
-            <h3 class="font-semibold text-indigo-300 tracking-wide text-sm uppercase">Verification Process</h3>
+    <main class="flex-grow pt-32 pb-20 px-4 md:px-8 max-w-5xl mx-auto w-full">
+
+      <!-- Hero -->
+      <div class="text-center mb-16 fade-in">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-card text-sm text-indigo-300 mb-6 border-indigo-500/20">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          </svg>
+          <span>Real-time Multi-Step News Verification</span>
+        </div>
+        <h1 class="text-5xl md:text-6xl font-extrabold tracking-tight mb-6">
+          Verified claims, <br /><span class="gradient-text">pure intelligence.</span>
+        </h1>
+        <p class="text-lg text-slate-400 max-w-2xl mx-auto mb-10">
+          Checking trusted Indian sources (The Hindu, NDTV, Times of India, ANI, PTI) and International sources
+          (Reuters, AP, BBC) for every claim.
+        </p>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-3 gap-4 max-w-2xl mx-auto text-left">
+          <div class="glass-card rounded-2xl p-5 border shadow-xl shadow-black/50">
+            <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1">Total Verified</div>
+            <div class="text-3xl font-bold text-white flex items-baseline gap-1">
+              <span id="stat-total" class="font-mono">1254</span>
+            </div>
           </div>
-          <div class="space-y-4" id="step-container">
-            <!-- Steps injected -->
+          <div
+            class="glass-card rounded-2xl p-5 border border-red-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
+            <div class="absolute inset-0 bg-red-500/5"></div>
+            <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Fake Detected</div>
+            <div class="text-3xl font-bold text-red-400 flex items-baseline gap-1 relative">
+              <span id="stat-fake" class="font-mono">420</span>
+            </div>
+          </div>
+          <div
+            class="glass-card rounded-2xl p-5 border border-emerald-500/20 shadow-xl shadow-black/50 relative overflow-hidden">
+            <div class="absolute inset-0 bg-emerald-500/5"></div>
+            <div class="text-slate-400 text-xs font-semibold tracking-wider uppercase mb-1 relative">Real Verified</div>
+            <div class="text-3xl font-bold text-emerald-400 flex items-baseline gap-1 relative">
+              <span id="stat-real" class="font-mono">812</span>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Right: Results -->
-      <div class="lg:col-span-5 flex flex-col gap-6">
-        
-        <!-- Result Panel -->
-        <div id="result-card" class="glass-card rounded-3xl p-6 hidden fade-in border border-slate-700/50 shadow-2xl relative overflow-hidden">
-          <div id="result-bg-glow" class="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20"></div>
-          
-          <div class="flex items-start justify-between mb-8">
-            <div>
-              <div class="text-xs font-bold tracking-widest text-slate-500 mb-1">ANALYSIS VERDICT</div>
-              <h2 id="result-verdict" class="text-4xl font-black tracking-tight">--</h2>
-              <p id="result-lang" class="text-xs text-slate-400 mt-2 font-mono bg-slate-800 inline-block px-2 py-0.5 rounded"></p>
+      <!-- Main Workspace -->
+      <div id="verify" class="grid grid-cols-1 lg:grid-cols-12 gap-6 relative">
+
+        <!-- Left: Input & Engine -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
+
+          <!-- Input Card -->
+          <div
+            class="glass-card rounded-3xl p-6 shadow-2xl shadow-indigo-500/5 border border-slate-700/50 relative overflow-hidden group">
+            <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-indigo-500 to-purple-500 opacity-50">
             </div>
-            
-            <div class="relative w-24 h-24 flex items-center justify-center">
-              <svg class="transform -rotate-90 w-24 h-24 absolute inset-0">
-                <circle cx="48" cy="48" r="42" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-800"></circle>
-                <circle id="score-ring" cx="48" cy="48" r="42" stroke="currentColor" stroke-width="8" fill="transparent" stroke-dasharray="264" stroke-dashoffset="264" class="transition-all duration-1000 ease-out"></circle>
-              </svg>
-              <div class="flex flex-col items-center justify-center space-y-0 text-center relative z-10">
-                <span id="score-text" class="text-2xl font-black">0%</span>
-                <span class="text-[9px] font-bold text-slate-400 tracking-wider">CONFIDENCE</span>
+
+            <div class="flex justify-between items-center mb-4">
+              <label class="text-sm font-semibold text-slate-300 tracking-wide">ENTER CLAIM TO FACT-CHECK</label>
+              <span id="char-count" class="text-xs font-mono text-slate-500">0 / 2000</span>
+            </div>
+
+            <textarea id="news-input"
+              class="w-full h-40 bg-slate-900/50 border border-slate-700 rounded-2xl p-4 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 resize-none transition-all font-medium leading-relaxed shadow-inner"
+              placeholder="Paste a headline, social media post, or WhatsApp forward here..."></textarea>
+
+            <div class="flex items-center justify-between mt-5">
+              <div class="flex gap-2">
+                <button onclick="fillSample('fake')"
+                  class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Fake
+                  Example</button>
+                <button onclick="fillSample('real')"
+                  class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-medium transition-colors border border-slate-700">Real
+                  Example</button>
+              </div>
+              <button id="verify-btn" onclick="startVerification()"
+                class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold tracking-wide shadow-lg shadow-indigo-600/30 transition-all active:scale-95 flex items-center gap-2 group-hover:animate-pulse-glow">
+                <span id="verify-btn-text">Fact-Check Now</span>
+                <svg id="verify-btn-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3">
+                  </path>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Card -->
+          <div id="progress-card" class="glass-card rounded-3xl p-6 hidden fade-in border border-indigo-500/20">
+            <div class="flex items-center gap-3 mb-6">
+              <div class="w-2 h-2 rounded-full bg-indigo-500 animate-ping"></div>
+              <h3 class="font-semibold text-indigo-300 tracking-wide text-sm uppercase">Verification Process</h3>
+            </div>
+            <div class="space-y-4" id="step-container">
+              <!-- Steps injected -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Results -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+
+          <!-- Result Panel -->
+          <div id="result-card"
+            class="glass-card rounded-3xl p-6 hidden fade-in border border-slate-700/50 shadow-2xl relative overflow-hidden">
+            <div id="result-bg-glow" class="absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20">
+            </div>
+
+            <div class="flex items-start justify-between mb-8">
+              <div>
+                <div class="text-xs font-bold tracking-widest text-slate-500 mb-1">ANALYSIS VERDICT</div>
+                <h2 id="result-verdict" class="text-4xl font-black tracking-tight">--</h2>
+                <p id="result-lang"
+                  class="text-xs text-slate-400 mt-2 font-mono bg-slate-800 inline-block px-2 py-0.5 rounded"></p>
+              </div>
+
+              <div class="relative w-24 h-24 flex items-center justify-center">
+                <svg class="transform -rotate-90 w-24 h-24 absolute inset-0">
+                  <circle cx="48" cy="48" r="42" stroke="currentColor" stroke-width="8" fill="transparent"
+                    class="text-slate-800"></circle>
+                  <circle id="score-ring" cx="48" cy="48" r="42" stroke="currentColor" stroke-width="8"
+                    fill="transparent" stroke-dasharray="264" stroke-dashoffset="264"
+                    class="transition-all duration-1000 ease-out"></circle>
+                </svg>
+                <div class="flex flex-col items-center justify-center space-y-0 text-center relative z-10">
+                  <span id="score-text" class="text-2xl font-black">0%</span>
+                  <span class="text-[9px] font-bold text-slate-400 tracking-wider">CONFIDENCE</span>
+                </div>
+              </div>
+            </div>
+
+            <div id="result-explanation"
+              class="text-sm font-medium text-slate-200 bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 mb-6 leading-relaxed">
+              --
+            </div>
+
+            <div class="space-y-3">
+              <h4 class="text-xs font-bold tracking-widest text-slate-500">TRUSTED SOURCES FOUND</h4>
+              <div id="result-sources" class="flex flex-col gap-2">
+                <!-- URLs -->
               </div>
             </div>
           </div>
 
-          <div id="result-explanation" class="text-sm font-medium text-slate-200 bg-slate-900/50 rounded-xl p-4 border border-slate-700/50 mb-6 leading-relaxed">
-            --
-          </div>
-
-          <div class="space-y-3">
-            <h4 class="text-xs font-bold tracking-widest text-slate-500">TRUSTED SOURCES FOUND</h4>
-            <div id="result-sources" class="flex flex-col gap-2">
-              <!-- URLs -->
+          <!-- Trusted Sources List -->
+          <div id="sources-card" class="glass-card rounded-3xl p-6 border border-slate-700/50">
+            <h3 class="text-xs font-bold tracking-widest text-slate-500 mb-4 uppercase">Verification Network</h3>
+            <div class="flex flex-wrap gap-2 text-[10px]">
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">THE HINDU</span>
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">NDTV</span>
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">ANI/PTI</span>
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">TIMES OF INDIA</span>
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">REUTERS</span>
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">AP / BBC</span>
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">ALTNEWS</span>
+              <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">BOOM LIVE</span>
             </div>
           </div>
-        </div>
 
-        <!-- Trusted Sources List -->
-        <div id="sources-card" class="glass-card rounded-3xl p-6 border border-slate-700/50">
-          <h3 class="text-xs font-bold tracking-widest text-slate-500 mb-4 uppercase">Verification Network</h3>
-          <div class="flex flex-wrap gap-2 text-[10px]">
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">THE HINDU</span>
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">NDTV</span>
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">ANI/PTI</span>
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">TIMES OF INDIA</span>
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">REUTERS</span>
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">AP / BBC</span>
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">ALTNEWS</span>
-             <span class="px-2 py-1 rounded bg-slate-800 border border-slate-700 text-slate-400">BOOM LIVE</span>
-          </div>
         </div>
-
       </div>
-    </div>
-  </main>
-</div>
+    </main>
+  </div>
 
-<script>
-const API_BASE = "https://satyacheck-production.up.railway.app"; // Production Railway Backend
+  <script>
+    const API_BASE = "https://satyacheck-r9yw.onrender.com"; // Production Railway Backend
 
-const SAMPLES = {
-  fake: "Latest News! Prime Minister announced free 10,000 INR for every bank account holder under new scheme. Apply now at this external link!",
-  real: "The Hindu: ISRO's solar mission Aditya-L1 has successfully completed its halo-orbit insertion around the Sun-Earth L1 point."
-};
+    const SAMPLES = {
+      fake: "Latest News! Prime Minister announced free 10,000 INR for every bank account holder under new scheme. Apply now at this external link!",
+      real: "The Hindu: ISRO's solar mission Aditya-L1 has successfully completed its halo-orbit insertion around the Sun-Earth L1 point."
+    };
 
-let checking = false;
+    let checking = false;
 
-const input = document.getElementById('news-input');
-const counter = document.getElementById('char-count');
-input.addEventListener('input', () => { counter.innerText = `${input.value.length} / 2000`; });
+    const input = document.getElementById('news-input');
+    const counter = document.getElementById('char-count');
+    input.addEventListener('input', () => { counter.innerText = `${input.value.length} / 2000`; });
 
-function fillSample(type) {
-  input.value = SAMPLES[type];
-  counter.innerText = `${input.value.length} / 2000`;
-}
+    function fillSample(type) {
+      input.value = SAMPLES[type];
+      counter.innerText = `${input.value.length} / 2000`;
+    }
 
-const STEPS = [
-  { id: 'search', label: 'STEP 1: Search Verification' },
-  { id: 'analysis', label: 'STEP 2: Evidence Analysis' },
-  { id: 'json', label: 'STEP 3: Structured Metadata Generation' }
-];
+    const STEPS = [
+      { id: 'search', label: 'STEP 1: Search Verification' },
+      { id: 'analysis', label: 'STEP 2: Evidence Analysis' },
+      { id: 'json', label: 'STEP 3: Structured Metadata Generation' }
+    ];
 
-function resetVerificationUI() {
-  document.getElementById('result-card').classList.add('hidden');
-  const prog = document.getElementById('progress-card');
-  prog.classList.remove('hidden');
-  document.getElementById('step-container').innerHTML = STEPS.map(s => `
+    function resetVerificationUI() {
+      document.getElementById('result-card').classList.add('hidden');
+      const prog = document.getElementById('progress-card');
+      prog.classList.remove('hidden');
+      document.getElementById('step-container').innerHTML = STEPS.map(s => `
     <div id="step-${s.id}" class="flex items-center gap-4 text-sm text-slate-500 opacity-60 transition-all duration-300">
       <div id="step-icon-${s.id}" class="w-6 h-6 rounded-full border border-slate-600 flex items-center justify-center bg-slate-800">
         <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle></svg>
@@ -293,108 +384,109 @@ function resetVerificationUI() {
       <span class="font-medium">${s.label}</span>
     </div>
   `).join('');
-}
+    }
 
-function updateStep(id, status) {
-  const row = document.getElementById(`step-${id}`);
-  const icon = document.getElementById(`step-icon-${id}`);
-  if (!row || !icon) return;
-  
-  if (status === 'running') {
-    row.classList.remove('opacity-60', 'text-slate-500');
-    row.classList.add('text-indigo-300', 'opacity-100');
-    icon.innerHTML = `<svg class="w-3 h-3 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
-  } else if (status === 'done') {
-    row.classList.add('text-emerald-400', 'opacity-100');
-    icon.innerHTML = `<svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
-  }
-}
+    function updateStep(id, status) {
+      const row = document.getElementById(`step-${id}`);
+      const icon = document.getElementById(`step-icon-${id}`);
+      if (!row || !icon) return;
 
-const sleep = ms => new Promise(r => setTimeout(r, ms));
+      if (status === 'running') {
+        row.classList.remove('opacity-60', 'text-slate-500');
+        row.classList.add('text-indigo-300', 'opacity-100');
+        icon.innerHTML = `<svg class="w-3 h-3 text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>`;
+      } else if (status === 'done') {
+        row.classList.add('text-emerald-400', 'opacity-100');
+        icon.innerHTML = `<svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+      }
+    }
 
-async function startVerification() {
-  const text = input.value.trim();
-  if (text.length < 10) return alert("Please enter a longer claim.");
-  if (checking) return;
-  
-  checking = true;
-  const btn = document.getElementById('verify-btn');
-  btn.classList.add('opacity-75', 'cursor-not-allowed');
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-  resetVerificationUI();
+    async function startVerification() {
+      const text = input.value.trim();
+      if (text.length < 10) return alert("Please enter a longer claim.");
+      if (checking) return;
 
-  try {
-    updateStep('search', 'running');
-    const res = await fetch(`${API_BASE}/api/check`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text })
-    });
-    
-    if (!res.ok) throw new Error("Backend connection failed.");
-    const data = await res.json();
+      checking = true;
+      const btn = document.getElementById('verify-btn');
+      btn.classList.add('opacity-75', 'cursor-not-allowed');
 
-    updateStep('search', 'done');
-    updateStep('analysis', 'running');
-    await sleep(600);
-    updateStep('analysis', 'done');
-    updateStep('json', 'running');
-    await sleep(400);
-    updateStep('json', 'done');
+      resetVerificationUI();
 
-    await sleep(300);
-    document.getElementById('progress-card').classList.add('hidden');
-    renderResult(data);
+      try {
+        updateStep('search', 'running');
+        const res = await fetch(`${API_BASE}/api/check`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text })
+        });
 
-  } catch (e) {
-    console.error(e);
-    alert("Verification failed. Make sure the backend is running.");
-    document.getElementById('progress-card').classList.add('hidden');
-  }
+        if (!res.ok) throw new Error("Backend connection failed.");
+        const data = await res.json();
 
-  checking = false;
-  btn.classList.remove('opacity-75', 'cursor-not-allowed');
-}
+        updateStep('search', 'done');
+        updateStep('analysis', 'running');
+        await sleep(600);
+        updateStep('analysis', 'done');
+        updateStep('json', 'running');
+        await sleep(400);
+        updateStep('json', 'done');
 
-function renderResult(data) {
-  const resCard = document.getElementById('result-card');
-  const verdictEl = document.getElementById('result-verdict');
-  const langEl = document.getElementById('result-lang');
-  const expEl = document.getElementById('result-explanation');
-  const scoreTxt = document.getElementById('score-text');
-  const ring = document.getElementById('score-ring');
-  const srcCont = document.getElementById('result-sources');
-  
-  resCard.classList.remove('hidden');
+        await sleep(300);
+        document.getElementById('progress-card').classList.add('hidden');
+        renderResult(data);
 
-  const v = data.verdict;
-  const colorClass = v === 'REAL' ? 'text-emerald-500' : (v === 'FAKE' ? 'text-red-500' : 'text-amber-500');
-  const bgClass = v === 'REAL' ? 'bg-emerald-500' : (v === 'FAKE' ? 'bg-red-500' : 'bg-amber-500');
+      } catch (e) {
+        console.error(e);
+        alert("Verification failed. Make sure the backend is running.");
+        document.getElementById('progress-card').classList.add('hidden');
+      }
 
-  verdictEl.innerText = v;
-  verdictEl.className = `text-4xl font-black tracking-tight ${colorClass}`;
-  
-  document.getElementById('result-bg-glow').className = `absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20 ${bgClass}`;
+      checking = false;
+      btn.classList.remove('opacity-75', 'cursor-not-allowed');
+    }
 
-  langEl.innerText = `LANG: ${data.language_detected.toUpperCase()}`;
-  expEl.innerText = data.reason;
+    function renderResult(data) {
+      const resCard = document.getElementById('result-card');
+      const verdictEl = document.getElementById('result-verdict');
+      const langEl = document.getElementById('result-lang');
+      const expEl = document.getElementById('result-explanation');
+      const scoreTxt = document.getElementById('score-text');
+      const ring = document.getElementById('score-ring');
+      const srcCont = document.getElementById('result-sources');
 
-  srcCont.innerHTML = data.sources.length ? data.sources.map(s => {
-      const d = new URL(s).hostname;
-      return `<a href="${s}" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-indigo-500 transition-colors">
+      resCard.classList.remove('hidden');
+
+      const v = data.verdict;
+      const colorClass = v === 'REAL' ? 'text-emerald-500' : (v === 'FAKE' ? 'text-red-500' : 'text-amber-500');
+      const bgClass = v === 'REAL' ? 'bg-emerald-500' : (v === 'FAKE' ? 'bg-red-500' : 'bg-amber-500');
+
+      verdictEl.innerText = v;
+      verdictEl.className = `text-4xl font-black tracking-tight ${colorClass}`;
+
+      document.getElementById('result-bg-glow').className = `absolute -top-20 -right-20 w-40 h-40 rounded-full blur-[80px] opacity-20 ${bgClass}`;
+
+      langEl.innerText = `LANG: ${data.language_detected.toUpperCase()}`;
+      expEl.innerText = data.reason;
+
+      srcCont.innerHTML = data.sources.length ? data.sources.map(s => {
+        const d = new URL(s).hostname;
+        return `<a href="${s}" target="_blank" class="flex items-center gap-3 p-3 rounded-xl bg-slate-800/50 border border-slate-700 hover:border-indigo-500 transition-colors">
         <div class="text-xs font-bold text-slate-400 capitalize">${d}</div>
         <div class="text-[10px] text-slate-500 truncate">${s}</div>
       </a>`;
-  }).join('') : '<div class="text-xs text-slate-500 italic">No trusted source URLs found.</div>';
+      }).join('') : '<div class="text-xs text-slate-500 italic">No trusted source URLs found.</div>';
 
-  const pct = Math.round(data.confidence * 100);
-  scoreTxt.innerText = `${pct}%`;
-  scoreTxt.className = `text-2xl font-black ${colorClass}`;
-  
-  const circ = 264;
-  ring.style.strokeDashoffset = circ - (pct / 100) * circ;
-  ring.className = `transition-all duration-1000 ease-out ${colorClass}`;
-}
-</script>
+      const pct = Math.round(data.confidence * 100);
+      scoreTxt.innerText = `${pct}%`;
+      scoreTxt.className = `text-2xl font-black ${colorClass}`;
+
+      const circ = 264;
+      ring.style.strokeDashoffset = circ - (pct / 100) * circ;
+      ring.className = `transition-all duration-1000 ease-out ${colorClass}`;
+    }
+  </script>
 </body>
+
 </html>
