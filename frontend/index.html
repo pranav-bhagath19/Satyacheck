@@ -348,7 +348,9 @@
   </div>
 
   <script>
-    const API_BASE = "https://satyacheck-r9yw.onrender.com"; // Production Railway Backend
+    const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? "http://localhost:8000"
+      : "https://satyacheck-r9yw.onrender.com";
 
     const SAMPLES = {
       fake: "Latest News! Prime Minister announced free 10,000 INR for every bank account holder under new scheme. Apply now at this external link!",

@@ -26,12 +26,26 @@ try:
 except Exception:
     LANGDETECT_AVAILABLE = False
 
-# DuckDuckGo search
+# DDG Search availability
 try:
     from duckduckgo_search import DDGS
     DDG_AVAILABLE = True
 except Exception:
     DDG_AVAILABLE = False
+
+# ML Model availability
+try:
+    import joblib
+    MODEL_PATH = "multilingual_model.pkl"
+    VEC_PATH = "vectorizer.pkl"
+    if os.path.exists(MODEL_PATH) and os.path.exists(VEC_PATH):
+        ml_model = joblib.load(MODEL_PATH)
+        ml_vectorizer = joblib.load(VEC_PATH)
+        ML_AVAILABLE = True
+    else:
+        ML_AVAILABLE = False
+except Exception:
+    ML_AVAILABLE = False
 
 # ============================================================
 # LOGGING & CONFIG
@@ -49,14 +63,18 @@ INDIAN_SOURCES = {
     "thehindu.com", "ndtv.com", "timesofindia.indiatimes.com",
     "aninews.in", "ptinews.com", "indiatoday.in", "hindustantimes.com",
     "theprint.in", "thewire.in", "scroll.in", "news18.com",
+    "indianexpress.com", "business-standard.com", "livemint.com",
+    "deccanherald.com", "nationalheraldindia.com", "outlookindia.com",
 }
 INTL_SOURCES = {
     "reuters.com", "apnews.com", "bbc.com", "bbc.co.uk",
     "aljazeera.com", "theguardian.com", "nytimes.com",
+    "bloomberg.com", "wsj.com", "afp.com", "cnn.com",
 }
 FACTCHECK_SOURCES = {
     "altnews.in", "boomlive.in", "factcheck.org",
-    "vishvasnews.com", "thequint.com",
+    "vishvasnews.com", "thequint.com", "fit.thequint.com",
+    "pib.gov.in", "factly.in", "newschecker.in",
 }
 
 ALL_TRUSTED = INDIAN_SOURCES | INTL_SOURCES | FACTCHECK_SOURCES
@@ -96,18 +114,32 @@ def search_and_verify(query: str):
         return "UNVERIFIED", 0.5, []
 
     try:
+        # Step 0: Clean query for search (truncate if too long)
+        search_query = query
+        if len(query) > 120:
+            # Use first 120 chars or first two sentences
+            search_query = query[:120]
+            if "." in query[:150]:
+                search_query = query[:query.find(".", 50) + 1]
+
         with DDGS() as ddgs:
             # Search news tab first (most relevant for recency)
-            results = list(ddgs.news(query, max_results=15))
+            logger.info(f"Searching for: {search_query[:50]}...")
+            results = list(ddgs.news(search_query, max_results=15))
             if not results:
                 # Fall back to regular web search
-                results = list(ddgs.text(query, max_results=15))
+                results = list(ddgs.text(search_query, max_results=15))
+            
+            # If still nothing, try the original full query just in case
+            if not results and query != search_query:
+                results = list(ddgs.text(query[:200], max_results=10))
 
-        logger.info(f"DDG returned {len(results)} results for query")
+        logger.info(f"DDG returned {len(results)} results")
 
         for r in results:
             url  = r.get("url") or r.get("href", "")
-            body = (r.get("body") or r.get("title") or "").lower()
+            # Some DDG results use 'body' for snippets, others 'snippet' or 'title'
+            body = (str(r.get("body", "")) + " " + str(r.get("title", ""))).lower()
             dom  = domain_of(url)
             cat  = classify_domain(dom)
 
@@ -138,21 +170,36 @@ def search_and_verify(query: str):
         return "FAKE", 0.88, all_sources[:5]
 
     if len(found_trusted) >= 3:
-        return "REAL", 0.92, found_trusted[:5]
+        return "REAL", 0.95, found_trusted[:5]
 
     if len(found_trusted) == 2:
-        return "REAL", 0.82, found_trusted[:5]
+        return "REAL", 0.88, found_trusted[:5]
 
     if len(found_trusted) == 1:
-        # Only one source → UNVERIFIED (per your 7-day rule)
-        return "UNVERIFIED", 0.60, found_trusted
+        # One trusted source is enough for REAL if it's highly credible
+        return "REAL", 0.75, found_trusted
 
-    if found_factcheck:
-        # Fact-checkers flagged it and no trusted sources confirm it
-        return "FAKE", 0.78, found_factcheck[:3]
+    # ── Step 3: ML Fallback ────────────────────────────────────
+    if ML_AVAILABLE and not found_factcheck and not found_trusted:
+        try:
+            # Simple cleaning for ML model
+            clean_text = query.lower()
+            import re
+            clean_text = re.sub(r'[^a-z0-9\s]', ' ', clean_text)
+            vec = ml_vectorizer.transform([clean_text])
+            prob = ml_model.predict_proba(vec)[0]
+            pred = ml_model.predict(vec)[0]
+            
+            # If ML is very confident, use its verdict
+            if prob[pred] > 0.80:
+                verdict = "FAKE" if pred == 1 else "REAL"
+                # Use lower confidence for ML
+                return verdict, float(prob[pred]) * 0.8, []
+        except Exception as e:
+            logger.error(f"ML Fallback failed: {e}")
 
     # Zero credible sources at all
-    return "UNVERIFIED", 0.45, []
+    return "UNVERIFIED", 0.40, []
 
 
 # ============================================================
