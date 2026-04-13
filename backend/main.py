@@ -28,7 +28,10 @@ except Exception:
 
 # DDG Search availability
 try:
-    from duckduckgo_search import DDGS
+    try:
+        from ddgs import DDGS
+    except ImportError:
+        from duckduckgo_search import DDGS
     DDG_AVAILABLE = True
 except Exception:
     DDG_AVAILABLE = False
@@ -122,17 +125,35 @@ def search_and_verify(query: str):
             if "." in query[:150]:
                 search_query = query[:query.find(".", 50) + 1]
 
-        with DDGS() as ddgs:
-            # Search news tab first (most relevant for recency)
-            logger.info(f"Searching for: {search_query[:50]}...")
-            results = list(ddgs.news(search_query, max_results=15))
-            if not results:
-                # Fall back to regular web search
-                results = list(ddgs.text(search_query, max_results=15))
-            
-            # If still nothing, try the original full query just in case
-            if not results and query != search_query:
-                results = list(ddgs.text(query[:200], max_results=10))
+        results = []
+        import random
+        
+        # Retry logic for ratelimiting
+        for attempt in range(2):
+            try:
+                with DDGS() as ddgs:
+                    # Search news tab first (most relevant for recency)
+                    logger.info(f"Searching (attempt {attempt+1}) for: {search_query[:50]}...")
+                    results = list(ddgs.news(search_query, max_results=15))
+                    if not results:
+                        # Fall back to regular web search
+                        results = list(ddgs.text(search_query, max_results=15))
+                    
+                    # If still nothing, try the original full query just in case
+                    if not results and query != search_query:
+                        results = list(ddgs.text(query[:200], max_results=10))
+                    
+                    if results:
+                        break
+            except Exception as e:
+                if ("Ratelimit" in str(e) or "403" in str(e)) and attempt == 0:
+                    wait_time = random.uniform(1, 3)
+                    logger.warning(f"DDG Ratelimit hit. Retrying in {wait_time:.1f}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    logger.error(f"DDG search error on attempt {attempt+1}: {e}")
+                    if attempt == 1: raise e
 
         logger.info(f"DDG returned {len(results)} results")
 

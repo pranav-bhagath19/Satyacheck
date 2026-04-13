@@ -6,7 +6,7 @@ httpx>=0.27.0
 langdetect>=1.0.9
 requests>=2.31.0
 beautifulsoup4>=4.12.0
-duckduckgo-search>=6.1.10
+ddgs>=1.0.0
 joblib>=1.3.2
-scikit-learn>=1.4.0
+scikit-learn==1.6.1
 pandas>=2.2.0
