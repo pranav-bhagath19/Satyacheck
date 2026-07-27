@@ -2,7 +2,8 @@
 SatyaCheck – Real-time News Verification API
 Uses DuckDuckGo search (no API key needed) to verify claims against
 trusted Indian and international news sources in real-time.
-"""
+""" 
+
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
